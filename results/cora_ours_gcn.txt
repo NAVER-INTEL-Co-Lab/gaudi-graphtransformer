@@ -1,0 +1,24 @@
+label per class:20, valid:500,test:1000
+method: ours hidden: 64 ours_layers:1 lr:0.01 use_graph:True aggregate:add graph_weight:0.8 alpha:0.5 ours_decay:0.001 ours_dropout:0.2 epochs:500 use_feat_norm:False use_bn:False use_residual:False use_act:False
+backbone:gcn, layers:4 hidden: 64 lr:0.01 decay:0.0005 dropout:0.5
+5 runs: Highest Train: 100.00 ± 0.00 Highest val epoch:17
+Highest Test: 83.70 ± 1.37 Final Test: 81.62 ± 2.61 run_time: 23.894660207524634
+
+label per class:20, valid:500,test:1000
+method: ours hidden: 64 ours_layers:1 lr:0.01 use_graph:True aggregate:add graph_weight:0.8 alpha:0.5 ours_decay:0.001 ours_dropout:0.2 epochs:500 use_feat_norm:False use_bn:False use_residual:False use_act:False
+backbone:gcn, layers:4 hidden: 64 lr:0.01 decay:0.0005 dropout:0.5
+5 runs: Highest Train: 100.00 ± 0.00 Highest val epoch:145
+Highest Test: 83.56 ± 0.43 Final Test: 82.20 ± 1.80 run_time: 23.960923507041873
+
+label per class:20, valid:500,test:1000
+method: ours hidden: 64 ours_layers:1 lr:0.01 use_graph:True aggregate:add graph_weight:0.8 alpha:0.5 ours_decay:0.001 ours_dropout:0.2 epochs:500 use_feat_norm:False use_bn:False use_residual:False use_act:False
+backbone:gcn, layers:4 hidden: 64 lr:0.01 decay:0.0005 dropout:0.5
+5 runs: Highest Train: 100.00 ± 0.00 Highest val epoch:44
+Highest Test: 84.26 ± 0.49 Final Test: 83.56 ± 1.18 run_time: 18.12735806154112
+
+label per class:20, valid:500,test:1000
+method: ours hidden: 64 ours_layers:1 lr:0.01 use_graph:True aggregate:add graph_weight:0.8 alpha:0.5 ours_decay:0.001 ours_dropout:0.2 epochs:500 use_feat_norm:False use_bn:False use_residual:False use_act:False
+backbone:gcn, layers:4 hidden: 64 lr:0.01 decay:0.0005 dropout:0.5
+5 runs: Highest Train: 100.00 ± 0.00 Highest val epoch:74
+Highest Test: 80.58 ± 1.20 Final Test: 80.30 ± 1.45 run_time: 23.903896068972973 ± 96.2127686503499
+
