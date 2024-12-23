@@ -9,7 +9,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from models import GCN
 from torch_geometric.utils import degree
-from torch_sparse import SparseTensor, matmul
 
 
 def full_attention_conv(qs, ks, vs, output_attn=False):

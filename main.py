@@ -2,6 +2,8 @@ import habana_frameworks.torch.core as htcore
 import argparse
 import copy
 import os
+os.environ["PT_HPU_LAZY_MODE"] = "0"
+
 import random
 import sys
 import warnings
@@ -22,32 +24,6 @@ import time
 warnings.filterwarnings('ignore')
 
 # NOTE: for consistent data splits, see data_utils.rand_train_test_idx
-def get_gpu_memory_map():
-    """Get the current gpu usage.
-    Returns
-    -------
-    usage: dict
-        Keys are device ids as integers.
-        Values are memory usage as integers in MB.
-    """
-    result = subprocess.check_output(
-        [
-            'nvidia-smi', '--query-gpu=memory.used',
-            '--format=csv,nounits,noheader'
-        ], encoding='utf-8')
-    # Convert lines into a dictionary
-    gpu_memory = np.array([int(x) for x in result.strip().split('\n')])
-    # gpu_memory_map = dict(zip(range(len(gpu_memory)), gpu_memory))
-    return gpu_memory
-
-def fix_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.backends.cudnn.deterministic = True
-
-
 ### Parse args ###
 parser = argparse.ArgumentParser(description='General Training Pipeline')
 parser_add_main_args(parser)
@@ -73,6 +49,9 @@ if args.rand_split:
 elif args.rand_split_class:
     split_idx_lst = [class_rand_splits(
         dataset.label, args.label_num_per_class, args.valid_num, args.test_num)]
+elif args.dataset in ['ogbn-proteins', 'ogbn-arxiv', 'ogbn-products']:
+    split_idx_lst = [dataset.load_fixed_splits()
+                     for _ in range(args.runs)]
 else:
     split_idx_lst = load_fixed_splits(
         dataset, name=args.dataset, protocol=args.protocol)
@@ -95,10 +74,11 @@ print(f'features shape={_shape}')
 # whether or not to symmetrize
 if args.dataset not in {'deezer-europe'}:
     dataset.graph['edge_index'] = to_undirected(dataset.graph['edge_index'])
+if not args.directed and args.dataset != 'ogbn-proteins':
+    dataset.graph['edge_index'] = to_undirected(dataset.graph['edge_index'])
 
 dataset.graph['edge_index'], dataset.graph['node_feat'] = \
-    dataset.graph['edge_index'].to(
-        device), dataset.graph['node_feat'].to(device)
+    dataset.graph['edge_index'].to(device), dataset.graph['node_feat'].to(device)
 
 if args.method == 'graphormer':
     dataset.graph['x'] = dataset.graph['x'].to(device)
@@ -113,29 +93,28 @@ print(f"num nodes {n} | num classes {c} | num node feats {d}")
 model = parse_method(args.method, args, c, d, device)
 
 # using rocauc as the eval function
-if args.dataset in ('deezer-europe'):
+if args.dataset in ('yelp-chi', 'deezer-europe', 'twitch-e', 'fb100', 'ogbn-proteins','deezer-europe'):
     criterion = nn.BCEWithLogitsLoss()
 else:
     criterion = nn.NLLLoss()
 
-eval_func = eval_acc
+### Performance metric (Acc, AUC, F1) ###
+if args.metric == 'rocauc':
+    eval_func = eval_rocauc
+elif args.metric == 'f1':
+    eval_func = eval_f1
+else:
+    eval_func = eval_acc
 
 logger = Logger(args.runs, args)
 
 model.train()
-model = torch.compile(model, backend = "hpu_backend")
+# model = torch.compile(model, backend = "hpu_backend")
+model = model.to(device)
+print('MODEL:', model)
 
 ### Training loop ###
 patience = 0
-if args.method == 'ours' and args.use_graph:
-    optimizer = torch.optim.Adam([
-        {'params': model.params1, 'weight_decay': args.ours_weight_decay},
-        {'params': model.params2, 'weight_decay': args.weight_decay}
-    ],
-        lr=args.lr)
-else:
-    optimizer = torch.optim.Adam(
-        model.parameters(), weight_decay=args.weight_decay, lr=args.lr)
 
 run_time_list = []
 
@@ -146,6 +125,17 @@ for run in range(args.runs):
         split_idx = split_idx_lst[run]
     train_idx = split_idx['train'].to(device)
     model.reset_parameters()
+    
+    if (args.method == 'ours' or args.method == 'sgformer') and args.use_graph:
+        optimizer = torch.optim.Adam([
+            {'params': model.params1, 'weight_decay': args.ours_weight_decay},
+            {'params': model.params2, 'weight_decay': args.weight_decay}
+        ],
+            lr=args.lr)
+    else:
+        optimizer = torch.optim.Adam(
+            model.parameters(), weight_decay=args.weight_decay, lr=args.lr)
+    
 
     best_val = float('-inf')
     patience = 0

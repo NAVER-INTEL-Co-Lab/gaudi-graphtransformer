@@ -22,3 +22,9 @@ backbone:gcn, layers:4 hidden: 64 lr:0.01 decay:0.0005 dropout:0.5
 5 runs: Highest Train: 100.00 ± 0.00 Highest val epoch:74
 Highest Test: 80.58 ± 1.20 Final Test: 80.30 ± 1.45 run_time: 23.903896068972973 ± 96.2127686503499
 
+label per class:20, valid:500,test:1000
+method: ours hidden: 64 ours_layers:1 lr:0.01 use_graph:True aggregate:add graph_weight:0.8 alpha:0.5 ours_decay:0.001 ours_dropout:0.2 epochs:500 use_feat_norm:False use_bn:False use_residual:False use_act:False
+backbone:gcn, layers:4 hidden: 64 lr:0.01 decay:0.0005 dropout:0.5
+5 runs: Highest Train: 100.00 ± 0.00 Highest val epoch:45
+Highest Test: 81.34 ± 0.42 Final Test: 80.14 ± 0.72 run_time: 24.36129733789929 ± 99.76493878483527
+

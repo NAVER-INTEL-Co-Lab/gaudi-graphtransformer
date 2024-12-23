@@ -93,7 +93,11 @@ def parser_add_main_args(parser):
                         help='Total number of test')
     parser.add_argument('--directed', action='store_true',
                         help='set to not symmetrize adjacency')
-
+    
+    # Add metric 
+    parser.add_argument('--metric', type=str, default='acc', choices=['acc', 'rocauc', 'f1'],
+                        help='evaluation metric')
+    
     # model
     parser.add_argument('--method', type=str, default='gcn')
     parser.add_argument('--hidden_channels', type=int, default=32)
@@ -158,6 +162,8 @@ def parser_add_main_args(parser):
                         help='number of encoder layers for graphormers')
     parser.add_argument('--encoder_emdim', type=int, default=768,
                         help='number of encoder embedded dimension')
+    
+    
 
 
 def parser_add_default_args(args):

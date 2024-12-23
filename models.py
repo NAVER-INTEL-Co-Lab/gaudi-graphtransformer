@@ -2,13 +2,11 @@ from operator import truediv
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_sparse import SparseTensor, matmul
 from torch_geometric.nn import GCNConv, SGConv, GATConv, JumpingKnowledge, APPNP, MessagePassing
 from torch_geometric.nn.conv.gcn_conv import gcn_norm
 from torch import FloatTensor
 import scipy.sparse
 import numpy as np
-import torch_sparse
 from torch_geometric.utils import degree
 
 class GCN(nn.Module):

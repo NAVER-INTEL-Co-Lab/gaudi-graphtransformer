@@ -12,6 +12,8 @@ The main difference between original deep learning structures and graph neural n
 Since, the graph datasets are composed with high sparsity. To resolve this issues, many GNN frameworks (such as PyG and DGL) providing spmm operations.
 Unfortunately, current version of Intel Gaudi-v2 is not supporting spase matrix multiplication [Intel Forum](https://forum.habana.ai/t/questions-regarding-the-architecture-about-habana-gaudi/355/6)
 
+We adapt and modify compatibility based on [SGFormer official](https://github.com/qitianwu/SGFormer) codes.
+
 
 ## Implemented models
 

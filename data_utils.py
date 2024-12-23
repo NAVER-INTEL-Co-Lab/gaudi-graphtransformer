@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 from scipy import sparse as sp
 from sklearn.metrics import f1_score, roc_auc_score
-from torch_sparse import SparseTensor
+# from torch_sparse import SparseTensor
 
 
 def rand_train_test_idx(label, train_prop=0.5, valid_prop=0.25, ignore_negative=True):

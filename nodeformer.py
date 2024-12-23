@@ -3,7 +3,7 @@ import torch
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_sparse import SparseTensor, matmul
+# from torch_sparse import SparseTensor, matmul
 from torch_geometric.utils import degree, remove_self_loops, add_self_loops
 
 BIG_CONSTANT = 1e8
@@ -198,9 +198,32 @@ def kernelized_gumbel_softmax(query, key, value, kernel_transformation, projecti
     else:
         return z_output
 
+# def add_conv_relational_bias(x, edge_index, b, trans='sigmoid'):
+#     '''
+#     compute updated result by the relational bias of input adjacency
+#     the implementation is similar to the Graph Convolution Network with a (shared) scalar weight for each edge
+#     '''
+#     row, col = edge_index
+#     d_in = degree(col, x.shape[1]).float()
+#     d_norm_in = (1. / d_in[col]).sqrt()
+#     d_out = degree(row, x.shape[1]).float()
+#     d_norm_out = (1. / d_out[row]).sqrt()
+#     conv_output = []
+#     for i in range(x.shape[2]):
+#         if trans == 'sigmoid':
+#             b_i = F.sigmoid(b[i])
+#         elif trans == 'identity':
+#             b_i = b[i]
+#         else:
+#             raise NotImplementedError
+#         value = torch.ones_like(row) * b_i * d_norm_in * d_norm_out
+#         adj_i = SparseTensor(row=col, col=row, value=value, sparse_sizes=(x.shape[1], x.shape[1]))
+#         conv_output.append( matmul(adj_i, x[:, :, i]) )  # [B, N, D]
+#     conv_output = torch.stack(conv_output, dim=2) # [B, N, H, D]
+#     return conv_output
+
 def add_conv_relational_bias(x, edge_index, b, trans='sigmoid'):
     '''
-    compute updated result by the relational bias of input adjacency
     the implementation is similar to the Graph Convolution Network with a (shared) scalar weight for each edge
     '''
     row, col = edge_index
@@ -217,9 +240,10 @@ def add_conv_relational_bias(x, edge_index, b, trans='sigmoid'):
         else:
             raise NotImplementedError
         value = torch.ones_like(row) * b_i * d_norm_in * d_norm_out
-        adj_i = SparseTensor(row=col, col=row, value=value, sparse_sizes=(x.shape[1], x.shape[1]))
-        conv_output.append( matmul(adj_i, x[:, :, i]) )  # [B, N, D]
-    conv_output = torch.stack(conv_output, dim=2) # [B, N, H, D]
+        adj_i_dense = torch.zeros((x.shape[1], x.shape[1]), dtype=torch.float).to(x.device)
+        adj_i_dense[col, row] = value
+        conv_output.append(torch.matmul(adj_i_dense, x[:, :, i]))  # [B, N, D]
+    conv_output = torch.stack(conv_output, dim=2)  # [B, N, H, D]
     return conv_output
 
 class NodeFormerConv(nn.Module):
@@ -307,6 +331,16 @@ def adj_mul(adj_i, adj, N):
     adj_j = adj_j.coalesce().indices()
     return adj_j
 
+def dense_adj_mul(adj_i, adj, N):
+    adj_i_dense = torch.zeros((N, N), dtype=torch.float).to(adj.device)
+    adj_i_dense[adj_i[0], adj_i[1]] = 1.0
+    adj_dense = torch.zeros((N, N), dtype=torch.float).to(adj.device)
+    adj_dense[adj[0], adj[1]] = 1.0
+    adj_j_dense = torch.mm(adj_i_dense, adj_dense)
+    adj_j = torch.nonzero(adj_j_dense, as_tuple=False).t()
+    return adj_j
+    
+
 class NodeFormer(nn.Module):
     '''
     NodeFormer model implementation
@@ -357,7 +391,9 @@ class NodeFormer(nn.Module):
         adj, _ = add_self_loops(adj, num_nodes=n)
         adjs.append(adj)
         for i in range(2 - 1): # edge_index of high order adjacency # args.rb_order == 2
-            adj = adj_mul(adj, adj, n)
+            # Need to be removed
+            # adj = adj_mul(adj, adj, n)
+            adj = dense_adj_mul(adj, adj, n)
             adjs.append(adj)
 
         x = data.graph['node_feat']
