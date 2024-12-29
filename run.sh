@@ -75,11 +75,11 @@ PT_HPU_LAZY_MODE=0 python main.py --backbone gcn --dataset pubmed --lr 0.005 --n
     --rand_split_class --valid_num 500 --test_num 1000 --no_feat_norm \
     --seed 123 --device 1 --runs 5
 
-# OGBN-Arxiv
-PT_HPU_LAZY_MODE=0 python main=batch.py --method sgformer  --dataset ogbn-arxiv --metric acc --lr 0.001 --hidden_channels 256 --use_graph --graph_weight 0.5 \
+# HPU OGBN-Arxiv
+PT_HPU_LAZY_MODE=0 python main-batch.py --method sgformer  --dataset ogbn-arxiv --metric acc --lr 0.001 --hidden_channels 256 --use_graph --graph_weight 0.5 \
     --gnn_num_layers 3  --gnn_dropout 0.5 --gnn_weight_decay 0. --gnn_use_residual --gnn_use_weight --gnn_use_bn --gnn_use_act \
     --trans_num_layers 1 --trans_dropout 0.5 --trans_weight_decay 0. --trans_use_residual --trans_use_weight --trans_use_bn \
-    --seed 123 --runs 5 --epochs 9 --eval_step 9 --device 0
+    --seed 123 --runs 5 --epochs 200 --eval_step 9 --device 0
 
 
 # HPU Nodeformer CORA
@@ -106,3 +106,35 @@ PT_HPU_LAZY_MODE=0 python main.py --backbone gcn --dataset pubmed --lr 0.005 --n
     --ours_dropout 0.3 --use_residual --alpha 0.5 --ours_weight_decay 0.01  \
     --rand_split_class --valid_num 500 --test_num 1000 --no_feat_norm \
     --seed 123 --device 1 --runs 5
+
+# HPU Nodeformer OGBN-Arxiv
+PT_HPU_LAZY_MODE=0 python main-batch.py --method nodeformer  --dataset ogbn-arxiv --metric acc --lr 0.001 --hidden_channels 256 --use_graph --graph_weight 0.5 \
+    --gnn_num_layers 3  --gnn_dropout 0.5 --gnn_weight_decay 0. --gnn_use_residual --gnn_use_weight --gnn_use_bn --gnn_use_act \
+    --trans_num_layers 1 --trans_dropout 0.5 --trans_weight_decay 0. --trans_use_residual --trans_use_weight --trans_use_bn \
+    --seed 123 --runs 5 --epochs 200 --eval_step 9 --device 0
+
+
+# HPU Nodeformer CORA
+PT_HPU_LAZY_MODE=0 python main.py --backbone gcn --dataset cora --lr 0.01 --num_layers 4 \
+    --hidden_channels 64 --weight_decay 5e-4 --dropout 0.5 \
+    --method graphgps --ours_layers 1 --use_graph --graph_weight 0.8 \
+    --ours_dropout 0.2 --use_residual --alpha 0.5 --ours_weight_decay 0.001 \
+    --rand_split_class --valid_num 500 --test_num 1000 --no_feat_norm \
+    --seed 123 --device 3 --runs 5 --data_dir ../data/
+
+# HPU Nodeformer Citeseer
+PT_HPU_LAZY_MODE=0 python main.py --backbone gcn --dataset citeseer --lr 0.005 --num_layers 4 \
+    --hidden_channels 64 --weight_decay 0.01 --dropout 0.5 \
+    --method graphgps --ours_layers 1 --use_graph --graph_weight 0.7 \
+    --ours_dropout 0.3 --use_residual --alpha 0.5 --ours_weight_decay 0.01 \
+    --rand_split_class --valid_num 500 --test_num 1000 --no_feat_norm \
+    --seed 123 --device 0 --runs 5 --data_dir ../data/
+
+# HPU Nodeformer Pubmed
+PT_HPU_LAZY_MODE=0 python main.py --backbone gcn --dataset pubmed --lr 0.005 --num_layers 4 \
+    --hidden_channels 64 --weight_decay 5e-4 --dropout 0.5 \
+     --rand_split_class --valid_num 500 --test_num 1000 \
+     --method graphgps --ours_layers 1 --use_graph --graph_weight 0.8 \
+    --ours_dropout 0.3 --use_residual --alpha 0.5 --ours_weight_decay 0.01  \
+    --rand_split_class --valid_num 500 --test_num 1000 --no_feat_norm \
+    --seed 123 --device 0 --runs 5 --data_dir ../data/

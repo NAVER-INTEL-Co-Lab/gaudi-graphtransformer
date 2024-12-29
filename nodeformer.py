@@ -385,9 +385,99 @@ class NodeFormer(nn.Module):
             fc.reset_parameters()
 
     def forward(self, data, tau=1.0):
+        device = next(self.parameters()).device
         n = data.graph['num_nodes']
         adjs = []
-        adj, _ = remove_self_loops(data.graph['edge_index'])
+        adj, _ = remove_self_loops(data.graph['edge_index'].to(device))
+        adj, _ = add_self_loops(adj, num_nodes=n)
+        adjs.append(adj)
+        for i in range(2 - 1):  # args.rb_order == 2
+            adj = adj_mul(adj, adj, n)
+            adjs.append(adj)
+
+        x = data.graph['node_feat'].to(device)
+        x = x.unsqueeze(0)  # [B, N, H, D], B=1 denotes number of graph
+        layer_ = []
+        link_loss_ = []
+        z = self.fcs[0](x)
+        if self.use_bn:
+            z = self.bns[0](z)
+        z = self.activation(z)
+        z = F.dropout(z, p=self.dropout, training=self.training)
+        layer_.append(z)
+
+        for i, conv in enumerate(self.convs):
+            if self.use_edge_loss:
+                z, link_loss = conv(z, adjs, tau)
+                link_loss_.append(link_loss)
+            else:
+                z = conv(z, adjs, tau)
+            if self.use_residual:
+                z += layer_[i]
+            if self.use_bn:
+                z = self.bns[i+1](z)
+            if self.use_act:
+                z = self.activation(z)
+            z = F.dropout(z, p=self.dropout, training=self.training)
+            layer_.append(z)
+
+        if self.use_jk: # use jk connection for each layer
+            z = torch.cat(layer_, dim=-1)
+
+        x_out = self.fcs[-1](z).squeeze(0)
+
+        if self.use_edge_loss:
+            return x_out, link_loss_
+        else:
+            return x_out
+        
+class NodeFormerLarge(nn.Module):
+    '''
+    NodeFormer model implementation
+    return: predicted node labels, a list of edge losses at every layer
+    '''
+    def __init__(self, in_channels, hidden_channels, out_channels, num_layers=2, num_heads=4, dropout=0.0,
+                 kernel_transformation=softmax_kernel_transformation, nb_random_features=30, use_bn=True, use_gumbel=True,
+                 use_residual=True, use_act=False, use_jk=False, nb_gumbel_sample=10, rb_order=2, rb_trans='sigmoid', use_edge_loss=True):
+        super(NodeFormerLarge, self).__init__()
+
+        self.convs = nn.ModuleList()
+        self.fcs = nn.ModuleList()
+        self.fcs.append(nn.Linear(in_channels, hidden_channels))
+        self.bns = nn.ModuleList()
+        self.bns.append(nn.LayerNorm(hidden_channels))
+        for i in range(num_layers):
+            self.convs.append(
+                NodeFormerConv(hidden_channels, hidden_channels, num_heads=num_heads, kernel_transformation=kernel_transformation,
+                              nb_random_features=nb_random_features, use_gumbel=use_gumbel, nb_gumbel_sample=nb_gumbel_sample,
+                               rb_order=rb_order, rb_trans=rb_trans, use_edge_loss=use_edge_loss))
+            self.bns.append(nn.LayerNorm(hidden_channels))
+
+        if use_jk:
+            self.fcs.append(nn.Linear(hidden_channels * num_layers + hidden_channels, out_channels))
+        else:
+            self.fcs.append(nn.Linear(hidden_channels, out_channels))
+
+        self.dropout = dropout
+        self.activation = F.elu
+        self.use_bn = use_bn
+        self.use_residual = use_residual
+        self.use_act = use_act
+        self.use_jk = use_jk
+        self.use_edge_loss = use_edge_loss
+
+    def reset_parameters(self):
+        for conv in self.convs:
+            conv.reset_parameters()
+        for bn in self.bns:
+            bn.reset_parameters()
+        for fc in self.fcs:
+            fc.reset_parameters()
+
+    def forward(self, data, tau=1.0):
+        n = data['num_nodes']
+        adjs = []
+        adj, _ = remove_self_loops(data['edge_index'])
         adj, _ = add_self_loops(adj, num_nodes=n)
         adjs.append(adj)
         for i in range(2 - 1): # edge_index of high order adjacency # args.rb_order == 2
@@ -396,7 +486,7 @@ class NodeFormer(nn.Module):
             adj = dense_adj_mul(adj, adj, n)
             adjs.append(adj)
 
-        x = data.graph['node_feat']
+        x = data['node_feat']
         x = x.unsqueeze(0) # [B, N, H, D], B=1 denotes number of graph
         layer_ = []
         link_loss_ = []

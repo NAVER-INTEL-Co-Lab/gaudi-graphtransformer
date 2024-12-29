@@ -147,13 +147,20 @@ for run in range(args.runs):
             
             
             optimizer.zero_grad()
-            out_i = model(x_i, edge_index_i)
+            if 'nodeformer' in args.method:
+                out, link_loss_= model(dataset)
+            else:
+                out_i = model(x_i, edge_index_i)
+                
             if args.dataset in ('yelp-chi', 'deezer-europe', 'twitch-e', 'fb100', 'ogbn-proteins'):
                 loss = criterion(out_i[train_mask_i], y_i.squeeze(1)[train_mask_i].to(torch.float))
 
             else:
                 out_i = F.log_softmax(out_i, dim=1)
                 loss = criterion(out_i[train_mask_i], y_i.squeeze(1)[train_mask_i])
+                
+            if args.method == 'nodeformer':
+                loss -= args.lamda * sum(link_loss_) / len(link_loss_)
             # print("Loss:", loss.item())
             # print("Output shape:", out_i.size())
             # print("Target shape:", y_i.size())

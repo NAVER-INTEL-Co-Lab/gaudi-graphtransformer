@@ -1,6 +1,7 @@
 from models import *
 from ours import *
 from nodeformer import *
+from graphgps import *
 
 
 def parse_method(method, args, c, d, device):
@@ -63,6 +64,23 @@ def parse_method(method, args, c, d, device):
                     trans_num_layers=args.trans_num_layers, trans_dropout=args.trans_dropout, trans_num_heads=args.trans_num_heads, trans_use_bn=args.trans_use_bn, trans_use_residual=args.trans_use_residual, trans_use_weight=args.trans_use_weight, trans_use_act=args.trans_use_act,
                      gnn_num_layers=args.gnn_num_layers, gnn_dropout=args.gnn_dropout, gnn_use_bn=args.gnn_use_bn, gnn_use_residual=args.gnn_use_residual, gnn_use_weight=args.gnn_use_weight, gnn_use_init=args.gnn_use_init, gnn_use_act=args.gnn_use_act,
                      ).to(device)
+    elif method == 'graphgps':
+        model = GPSModel(in_channels=d,
+                         out_channels=c,
+                         hidden_channels=args.hidden_channels,
+                         num_layers=args.num_layers,
+                         num_heads=args.num_heads,
+                         dropout=args.dropout,
+                         attn_dropout=args.dropout,
+                         use_bn=args.use_bn).to(device)
+    elif method == 'nodeformer_sub':
+        model = NodeFormerLarge(in_channels=d,
+                         hidden_channels=args.hidden_channels,
+                         out_channels=c,
+                         num_layers=args.num_layers,
+                         dropout=args.dropout,
+                         num_heads=args.num_heads,
+                         use_bn=args.use_bn).to(device)
     else:
         raise ValueError(f'Invalid method {method}')
     return model
