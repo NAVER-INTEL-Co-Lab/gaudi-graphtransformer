@@ -58,6 +58,11 @@ def parse_method(method, args, c, d, device):
             gnn=parse_method(args.backbone, args, args.hidden_channels, d, device)
             model = SGFormer(d, args.hidden_channels, c, num_layers=args.ours_layers, alpha=args.alpha, dropout=args.ours_dropout, num_heads=args.num_heads,
                     use_bn=args.use_bn, use_residual=args.ours_use_residual, use_graph=args.use_graph, use_weight=args.ours_use_weight, use_act=args.ours_use_act, graph_weight=args.graph_weight, gnn=gnn, aggregate=args.aggregate).to(device)
+    elif args.method == 'sgformer':
+        model = SGFormer_large(d, args.hidden_channels, c, graph_weight=args.graph_weight, aggregate=args.aggregate,
+                    trans_num_layers=args.trans_num_layers, trans_dropout=args.trans_dropout, trans_num_heads=args.trans_num_heads, trans_use_bn=args.trans_use_bn, trans_use_residual=args.trans_use_residual, trans_use_weight=args.trans_use_weight, trans_use_act=args.trans_use_act,
+                     gnn_num_layers=args.gnn_num_layers, gnn_dropout=args.gnn_dropout, gnn_use_bn=args.gnn_use_bn, gnn_use_residual=args.gnn_use_residual, gnn_use_weight=args.gnn_use_weight, gnn_use_init=args.gnn_use_init, gnn_use_act=args.gnn_use_act,
+                     ).to(device)
     else:
         raise ValueError(f'Invalid method {method}')
     return model
@@ -120,11 +125,24 @@ def parser_add_main_args(parser):
     # training
     parser.add_argument('--lr', type=float, default=0.01)
     parser.add_argument('--weight_decay', type=float, default=5e-3)
+    parser.add_argument('--batch_size', type=int, default=10000, help='mini batch training for large graphs')
     parser.add_argument('--dropout', type=float, default=0.5)
 
     # display and utility
     parser.add_argument('--display_step', type=int,
                         default=50, help='how often to print')
+    parser.add_argument('--eval_step', type=int,
+                        default=1, help='how often to evaluate')
+    parser.add_argument('--cached', action='store_true',
+                        help='set to use faster sgc')
+    parser.add_argument('--print_prop', action='store_true',
+                        help='print proportions of predicted class')
+    parser.add_argument('--save_result', action='store_true',
+                        help='save result')
+    parser.add_argument('--save_model', action='store_true', help='whether to save model')
+    parser.add_argument('--use_pretrained', action='store_true', help='whether to use pretrained model')
+    parser.add_argument('--save_att', action='store_true', help='whether to save attention (for visualization)')
+    parser.add_argument('--model_dir', type=str, default='../../model/')
 
     parser.add_argument('--no_feat_norm', action='store_true',
                         help='Not use feature normalization.')
@@ -163,6 +181,25 @@ def parser_add_main_args(parser):
     parser.add_argument('--encoder_emdim', type=int, default=768,
                         help='number of encoder embedded dimension')
     
+    # GNN Branch
+    parser.add_argument('--gnn_use_bn', action='store_true', help='use batchnorm for each GNN layer')
+    parser.add_argument('--gnn_use_residual', action='store_true', help='use residual link for each GNN layer')
+    parser.add_argument('--gnn_use_weight', action='store_true', help='use weight for GNN convolution')
+    parser.add_argument('--gnn_use_init', action='store_true', help='use initial feat for each GNN layer')
+    parser.add_argument('--gnn_use_act', action='store_true', help='use activation for each GNN layer')
+    parser.add_argument('--gnn_num_layers', type=int, default=2, help='number of layers for GNN')
+    parser.add_argument('--gnn_dropout', type=float, default=0.0)
+    parser.add_argument('--gnn_weight_decay', type=float, default=1e-3)
+
+    # all-pair attention (Transformer) branch
+    parser.add_argument('--trans_num_heads', type=int, default=1, help='number of heads for attention')
+    parser.add_argument('--trans_use_weight', action='store_true', help='use weight for trans convolution')
+    parser.add_argument('--trans_use_bn', action='store_true', help='use layernorm for trans')
+    parser.add_argument('--trans_use_residual', action='store_true', help='use residual link for each trans layer')
+    parser.add_argument('--trans_use_act', action='store_true', help='use activation for each trans layer')
+    parser.add_argument('--trans_num_layers', type=int, default=2, help='number of layers for all-pair attention.')
+    parser.add_argument('--trans_dropout', type=float, help='gnn dropout.')
+    parser.add_argument('--trans_weight_decay', type=float, default=1e-3)
     
 
 

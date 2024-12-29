@@ -36,6 +36,29 @@ def rand_train_test_idx(label, train_prop=0.5, valid_prop=0.25, ignore_negative=
     return train_idx, valid_idx, test_idx
 
 
+def load_fixed_splits(data_dir, dataset, name, protocol):
+    splits_lst = []
+    if name in ['cora', 'citeseer', 'pubmed'] and protocol == 'semi':
+        splits = {}
+        splits['train'] = torch.as_tensor(dataset.train_idx)
+        splits['valid'] = torch.as_tensor(dataset.valid_idx)
+        splits['test'] = torch.as_tensor(dataset.test_idx)
+        splits_lst.append(splits)
+    elif name in ['cora', 'citeseer', 'pubmed', 'chameleon', 'squirrel', 'film', 'cornell', 'texas', 'wisconsin']:
+        for i in range(10):
+            splits_file_path = '{}/geom-gcn/splits/{}'.format(data_dir, name) + '_split_0.6_0.2_'+str(i)+'.npz'
+            splits = {}
+            with np.load(splits_file_path) as splits_file:
+                splits['train'] = torch.BoolTensor(splits_file['train_mask'])
+                splits['valid'] = torch.BoolTensor(splits_file['val_mask'])
+                splits['test'] = torch.BoolTensor(splits_file['test_mask'])
+            splits_lst.append(splits)
+    else:
+        raise NotImplementedError
+
+    return splits_lst
+
+
 def class_rand_splits(label, label_num_per_class, valid_num=500, test_num=1000):
     """use all remaining data points as test data, so test_num will not be used"""
     train_idx, non_train_idx = [], []
@@ -300,3 +323,66 @@ def to_sparse_tensor(edge_index, edge_feat, num_nodes):
     adj_t.storage.csr2csc()
 
     return adj_t
+
+def eval_f1(y_true, y_pred):
+    acc_list = []
+    y_true = y_true.detach().cpu().numpy()
+    y_pred = y_pred.argmax(dim=-1, keepdim=True).detach().cpu().numpy()
+
+    for i in range(y_true.shape[1]):
+        f1 = f1_score(y_true, y_pred, average='micro')
+        acc_list.append(f1)
+
+    return sum(acc_list)/len(acc_list)
+
+def eval_acc(y_true, y_pred):
+    acc_list = []
+    y_true = y_true.detach().cpu().numpy()
+    y_pred = y_pred.argmax(dim=-1, keepdim=True).detach().cpu().numpy()
+
+    for i in range(y_true.shape[1]):
+        is_labeled = y_true[:, i] == y_true[:, i]
+        correct = y_true[is_labeled, i] == y_pred[is_labeled, i]
+        acc_list.append(float(np.sum(correct))/len(correct))
+
+    return sum(acc_list)/len(acc_list)
+
+
+def eval_rocauc(y_true, y_pred):
+    """ adapted from ogb
+    https://github.com/snap-stanford/ogb/blob/master/ogb/nodeproppred/evaluate.py"""
+    rocauc_list = []
+    y_true = y_true.detach().cpu().numpy()
+    if y_true.shape[1] == 1:
+        # use the predicted class for single-class classification
+        y_pred = F.softmax(y_pred, dim=-1)[:,1].unsqueeze(1).cpu().numpy()
+    else:
+        y_pred = y_pred.detach().cpu().numpy()
+
+    for i in range(y_true.shape[1]):
+        # AUC is only defined when there is at least one positive data.
+        if np.sum(y_true[:, i] == 1) > 0 and np.sum(y_true[:, i] == 0) > 0:
+            is_labeled = y_true[:, i] == y_true[:, i]
+            score = roc_auc_score(y_true[is_labeled, i], y_pred[is_labeled, i])
+                                
+            rocauc_list.append(score)
+
+    if len(rocauc_list) == 0:
+        raise RuntimeError(
+            'No positively labeled data available. Cannot compute ROC-AUC.')
+
+    return sum(rocauc_list)/len(rocauc_list)
+
+def convert_to_adj(edge_index,n_node):
+    '''convert from pyg format edge_index to n by n adj matrix'''
+    adj=torch.zeros((n_node,n_node))
+    row,col=edge_index
+    adj[row,col]=1
+    return adj
+
+def adj_mul(adj_i, adj, N):
+    adj_i_sp = torch.sparse_coo_tensor(adj_i, torch.ones(adj_i.shape[1], dtype=torch.float).to(adj.device), (N, N))
+    adj_sp = torch.sparse_coo_tensor(adj, torch.ones(adj.shape[1], dtype=torch.float).to(adj.device), (N, N))
+    adj_j = torch.sparse.mm(adj_i_sp, adj_sp)
+    adj_j = adj_j.coalesce().indices()
+    return adj_j

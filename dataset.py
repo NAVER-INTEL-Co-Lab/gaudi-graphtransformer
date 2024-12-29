@@ -16,6 +16,7 @@ from sklearn.preprocessing import label_binarize
 from torch_geometric.datasets import Planetoid
 from torch_geometric.transforms import ToUndirected
 from torch_geometric.utils import add_self_loops, remove_self_loops, degree, to_dense_adj
+from ogb.nodeproppred import NodePropPredDataset
 
 DATAPATH = '../../data/'
 
@@ -96,6 +97,8 @@ def load_nc_dataset(args):
         # dataset = load_wikipedia(dataname,args.no_feat_norm)
     elif dataname in ('roman-empire', 'amazon-ratings', 'minesweeper', 'tolokers', 'questions'):
         dataset = load_heterophily_dataset(dataname)
+    elif dataname in ('ogbn-arxiv', 'ogbn-products'):
+        dataset = load_ogb_dataset(DATAPATH, dataname)
     else:
         raise ValueError('Invalid dataname')
     return dataset
@@ -349,6 +352,23 @@ def augment_node_features(edge_index, node_features, use_sgc_features, use_ident
             node_features = torch.cat([node_features, adj_matrix], dim=1)
 
         return node_features
+    
+def load_ogb_dataset(data_dir, name):
+    dataset = NCDataset(name)
+    ogb_dataset = NodePropPredDataset(name=name, root=f'{data_dir}ogb')
+    dataset.graph = ogb_dataset.graph
+    dataset.graph['edge_index'] = torch.as_tensor(dataset.graph['edge_index'])
+    dataset.graph['node_feat'] = torch.as_tensor(dataset.graph['node_feat'])
+
+    def ogb_idx_to_tensor():
+        split_idx = ogb_dataset.get_idx_split()
+        tensor_split_idx = {key: torch.as_tensor(
+            split_idx[key]) for key in split_idx}
+        return tensor_split_idx
+    dataset.load_fixed_splits = ogb_idx_to_tensor  # ogb_dataset.get_idx_split
+    dataset.label = torch.as_tensor(ogb_dataset.labels).reshape(-1, 1)
+    return dataset
+
 
 if __name__ == '__main__':
     # load_airport()

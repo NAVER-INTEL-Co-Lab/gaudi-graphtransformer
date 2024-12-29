@@ -1,5 +1,6 @@
 # VSCode settings
 .vscode/
+.graph_dumps/*
 results/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
