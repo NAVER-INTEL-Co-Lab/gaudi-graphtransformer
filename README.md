@@ -22,7 +22,33 @@ We adapt and modify compatibility based on [SGFormer official](https://github.co
 - Cobformer
 - Nodeformer
 
+## How to run this repository
+
+```shell
+docker run -it --runtime=habana -e HABANA_VISIBLE_DEVICES=all -e OMPI_MCA_btl_vader_single_copy_mechanism=none --cap-add=sys_nice --net=host --ipc=host -v /home/irteamsu:/root vault.habana.ai/gaudi-docker/1.17.1/ubuntu22.04/habanalabs/pytorch-installer-2.3.1:latest
+pip install -r requirements_docker.txt
+```
+
+Please refer to run.sh commands to run each models to HPU
+
+For the large datasets such as ogbn-arxiv, ogbn-proteins, we conducted subgraph sampling training due to the memory issues.
+
+Since current version of the codes were implemented with dense matrix multiplication version, ogbn-arxiv need 100GB for the full-graph training.
+
 ## Functionality
 
 We will support spmm kernels in TPC-C kernel levels.
+
+## General Issues
+
+```python
+ #model = torch.compile(model, backend = "hpu_backend")
+ device = "hpu"
+ model = model.to(device)
+```
+
+Current version of the code occurs error when we use torch.compile() with backend = "hpu_backend". 
+It seems to be related to not work with dynamic shapes of the tensors when we move to HPU.
+
+For the speedup, it needs to be resolved in the future version of the codes.
 
