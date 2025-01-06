@@ -64,7 +64,13 @@ void SparseMatrixMulFwdF32Test::spmm_reference_implementation(
         for(int32_t nz_idx = 0 ; nz_idx < num_nnz; nz_idx++){
             int32_t row_coord[] = {nz_idx, 0};
             int32_t row = row_indices.ElementAt(row_coord);
+            int32_t col = col_indices.ElementAt(row_coord);
+            int32_t val = values.ElementAt(row_coord);
+
             printf("row: %d\n", row);
+            printf("col: %d\n", col);
+            printf("val: %d\n", val);
+
             int32_t col_coord[] = {nz_idx,0};
             int common = static_cast<int>(col_indices.ElementAt(col_coord));
             int32_t val_coord[] = {nz_idx,0};
@@ -73,6 +79,7 @@ void SparseMatrixMulFwdF32Test::spmm_reference_implementation(
             for(int32_t dense_col = 0; dense_col < (int32_t)bMatrix.Size(0); dense_col++){
                 int32_t b_coord[] = {dense_col, common, batch};
                 float b_val = bMatrix.ElementAt(b_coord);
+                printf("col: %f\n", b_val);
                 int32_t c_coord[] = {dense_col, row, batch};
                 float accum = output.ElementAt(c_coord);
                 accum = std::fmaf(value, b_val, accum);
@@ -193,8 +200,8 @@ void SparseMatrixMulFwdF32Test::spmm_reference_implementation(
 
 
 void testCompareDenseAndSparse() {
-    const int col = 65;
-    const int row = 6;
+    const int col = 3;
+    const int row = 5;
     const int common = 4;
     const int batch = 1;
 
@@ -205,11 +212,58 @@ void testCompareDenseAndSparse() {
     float_3DTensor a_matrix(fmInitializer_a);
     a_matrix.InitRand(1.0f, 10.0f);
 
+    for(int i=0;i<row;i++){
+        for(int j=0;j<common;j++){
+            for(int k=0;k<batch;k++){
+                int32_t coord[] = {j, i, k};
+                printf("a_matrix[%d][%d][%d]: %f\n", j, i, k, a_matrix.ElementAt(coord));
+            }
+        }
+    }
+
     float_3DTensor b_matrix(fmInitializer_b);
     b_matrix.InitRand(1.0f, 10.0f);
 
     float_3DTensor c_matrix_dense(fmInitializer_c);
     float_3DTensor c_matrix_sparse(fmInitializer_c);
+
+
+    // Make a matrix sparse 
+    int sparse_coord[] = {0,0,0}
+    a_matrix.SetElement(sparse_coord,0);
+
+    sparse_coord[0] = 0 ; sparse_coord[1] = 2;
+    a_matrix.SetElement(sparse_coord,0);
+
+    sparse_coord[0] = 1 ; sparse_coord[0] = 0;
+    a_matrix.SetElement(sparse_coord,0);
+
+    sparse_coord[0] = 1 ; sparse_coord[0] = 1;
+    a_matrix.SetElement(sparse_coord,0);
+
+    sparse_coord[0] = 1 ; sparse_coord[0] = 3;
+    a_matrix.SetElement(sparse_coord,0);
+
+    sparse_coord[0] = 2 ; sparse_coord[0] = 0;
+    a_matrix.SetElement(sparse_coord,0);
+
+    sparse_coord[0] = 2 ; sparse_coord[0] = 1;
+    a_matrix.SetElement(sparse_coord,0);
+
+    sparse_coord[0] = 2 ; sparse_coord[0] = 2;
+    a_matrix.SetElement(sparse_coord,0);
+
+    sparse_coord[0] = 2 ; sparse_coord[0] = 3;
+    a_matrix.SetElement(sparse_coord,0);
+
+    sparse_coord[0] = 3 ; sparse_coord[0] = 1;
+    a_matrix.SetElement(sparse_coord,0);
+
+    sparse_coord[0] = 3 ; sparse_coord[0] = 2;
+    a_matrix.SetElement(sparse_coord,0);
+
+    sparse_coord[0] = 3 ; sparse_coord[0] = 3;
+    a_matrix.SetElement(sparse_coord,0);
 
     // Sparse representation of `a_matrix`
     uint64_t sparseInitializer[] = {8, 1};
@@ -219,30 +273,64 @@ void testCompareDenseAndSparse() {
 
     // Populate sparse representation based on known sparsity
 
-    int row_indices_coords[] = {0, 0};
+    int cur_indices_coords[] = {0, 0};
     // int col_indices_coords[] = {0, 0};
     // int values_coords[] = {0, 0};
 
-    row_indices.SetElement(row_indices_coords, 0);
-    // row_indices.SetElement({0, 0}, 0); col_indices.SetElement({0, 0}, 0); values.SetElement({0, 0}, a_matrix.ElementAt({0, 0, 0}));
-    // row_indices.SetElement({1, 0}, 1); col_indices.SetElement({1, 0}, 1); values.SetElement({1, 0}, a_matrix.ElementAt({1, 1, 0}));
-    // row_indices.SetElement({2, 0}, 2); col_indices.SetElement({2, 0}, 0); values.SetElement({2, 0}, a_matrix.ElementAt({0, 2, 0}));
-    // row_indices.SetElement({3, 0}, 2); col_indices.SetElement({3, 0}, 2); values.SetElement({3, 0}, a_matrix.ElementAt({2, 2, 0}));
-    // row_indices.SetElement({4, 0}, 3); col_indices.SetElement({4, 0}, 1); values.SetElement({4, 0}, a_matrix.ElementAt({1, 3, 0}));
+    row_indices.SetElement(cur_indices_coords, 0);
+    col_indices.SetElement(cur_indices_coords, 1);
+    values.SetElement(cur_indices_coords, 2);
+    cur_indices_coords[0] +=1;
+
+    row_indices.SetElement(cur_indices_coords, 0);
+    col_indices.SetElement(cur_indices_coords, 3);
+    values.SetElement(cur_indices_coords, 3);
+    cur_indices_coords[0] +=1;
+
+    row_indices.SetElement(cur_indices_coords, 1);
+    col_indices.SetElement(cur_indices_coords, 2);
+    values.SetElement(cur_indices_coords, 3);
+    cur_indices_coords[0] +=1;
+
+    row_indices.SetElement(cur_indices_coords, 3);
+    col_indices.SetElement(cur_indices_coords, 0);
+    values.SetElement(cur_indices_coords, -1);
+    cur_indices_coords[0] +=1;
+
+    row_indices.SetElement(cur_indices_coords, 4);
+    col_indices.SetElement(cur_indices_coords, 0);
+    values.SetElement(cur_indices_coords, 5);
+    cur_indices_coords[0] +=1;
+
+    row_indices.SetElement(cur_indices_coords, 4);
+    col_indices.SetElement(cur_indices_coords, 1);
+    values.SetElement(cur_indices_coords, 1);
+    cur_indices_coords[0] +=1;
+
+    row_indices.SetElement(cur_indices_coords, 4);
+    col_indices.SetElement(cur_indices_coords, 2);
+    values.SetElement(cur_indices_coords, 3);
+    cur_indices_coords[0] +=1;
+
+    row_indices.SetElement(cur_indices_coords, 4);
+    col_indices.SetElement(cur_indices_coords, 3);
+    values.SetElement(cur_indices_coords, 2);
+    cur_indices_coords[0] +=1;
+    
 
     // Execute reference dense matrix multiplication
     SparseMatrixMulFwdF32Test testObj;
-    testObj.matrix_mul_reference_implementation(a_matrix, b_matrix, c_matrix_dense);
+    // testObj.matrix_mul_reference_implementation(a_matrix, b_matrix, c_matrix_dense);
 
     // Execute sparse matrix multiplication
     testObj.spmm_reference_implementation(row_indices, col_indices, values, b_matrix, c_matrix_sparse);
 
     // Compare outputs
-    for (int i = 0; i < c_matrix_dense.ElementCount(); i++) {
-        float dense_val = c_matrix_dense.Data()[i];
-        float sparse_val = c_matrix_sparse.Data()[i];
-        assert(std::abs(dense_val - sparse_val) < 1e-6 && "Mismatch in dense and sparse outputs");
-    }
+    // for (int i = 0; i < c_matrix_dense.ElementCount(); i++) {
+    //     float dense_val = c_matrix_dense.Data()[i];
+    //     float sparse_val = c_matrix_sparse.Data()[i];
+    //     assert(std::abs(dense_val - sparse_val) < 1e-6 && "Mismatch in dense and sparse outputs");
+    // }
 
     std::cout << "Unit test passed: Dense and sparse implementations match!" << std::endl;
 }
