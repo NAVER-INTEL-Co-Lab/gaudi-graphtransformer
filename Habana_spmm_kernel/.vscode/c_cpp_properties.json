@@ -7,12 +7,20 @@
                 "/usr/lib/habanatools/include/**",
                 "${workspaceFolder}/doc/**"
             ],
-            "defines": [],
-            "compilerPath": "/usr/bin/g++",
+            "defines": [
+                "TPC_COMPILER"
+            ],
+            "compilerPath": null,
             "cStandard": "c23",
             "cppStandard": "c++17",
-            "intelliSenseMode": "linux-gcc-x86",
-            "configurationProvider": "ms-vscode.cpptools"
+            "intelliSenseMode": "linux-clang-x86",
+            "configurationProvider": "ms-vscode.cpptools",
+            "browse": {
+                "path": [
+                    "/usr/lib/habanatools/include/",
+                    "${workspaceFolder}/"
+                ]
+            }
         }
     ],
     "version": 4

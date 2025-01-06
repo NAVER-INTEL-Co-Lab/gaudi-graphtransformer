@@ -23,12 +23,13 @@ include_directories(../src/gaudi_src                          # include headers 
                     ../src
                     ./gaudi_test
                     ./gaudi2_test
+                    ./implementation
                     /usr/lib/habanatools/include
                     .
                     )
 
 # Select files to compile
-file(GLOB TESTS_FILES *.cpp gaudi_test/*.cpp gaudi2_test/*.cpp)
+file(GLOB TESTS_FILES *.cpp gaudi_test/*.cpp gaudi2_test/*.cpp implementation/*.cpp)
 
 # Create test executable
 add_executable(${TEST_TARGET} ${TESTS_FILES})

@@ -22,13 +22,14 @@ file(GLOB SRC *.cpp gaudi_src/*.cpp gaudi2_src/*.cpp)
 add_library(${TARGET} SHARED ${SRC})
 
 include_directories(.
-                    gaudi_src
-                    gaudi2_src
-                    )
+gaudi_src
+gaudi2_src
+)
 
 # Generate a list of all TPC headers for compilation dependencies.
 file(GLOB TPC_GAUDI_HEADERS ../kernels/gaudi/*.h)
-file(GLOB TPC_GAUDI2_HEADERS ../kernels/gaudi2/*.h)
+
+# list(FILTER TPC_GAUDI_HEADERS EXCLUDE REGEX ".*sparse_matrix_mul_fwd_f32.c")
 
 IF( NOT CMAKE_BUILD_TYPE )
    SET( CMAKE_BUILD_TYPE Release ... FORCE )
