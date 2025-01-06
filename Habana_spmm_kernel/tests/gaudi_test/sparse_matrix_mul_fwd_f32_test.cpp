@@ -1,7 +1,6 @@
-// #include "sparse_matrix_mul_fwd_f32_test.hpp"
-#include "entry_points.hpp"
 #include "sparse_matrix_mul_fwd_f32_test.hpp"
-#include<cassert>
+#include "entry_points.hpp"
+#include <cassert>
 
 
 
