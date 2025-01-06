@@ -1,7 +1,6 @@
 // #include "sparse_matrix_mul_fwd_f32_test.hpp"
 #include "entry_points.hpp"
 #include "sparse_matrix_mul_fwd_f32_test.hpp"
-#include "matrix_mul_fwd_f32_test.hpp"
 #include<cassert>
 
 
@@ -214,17 +213,23 @@ void testCompareDenseAndSparse() {
     float_3DTensor c_matrix_sparse(fmInitializer_c);
 
     // Sparse representation of `a_matrix`
-    uint64_t sparseInitializer[] = {5, 1};
+    uint64_t sparseInitializer[] = {8, 1};
     float_2DTensor row_indices(sparseInitializer);
     float_2DTensor col_indices(sparseInitializer);
     float_2DTensor values(sparseInitializer);
 
     // Populate sparse representation based on known sparsity
-    row_indices.SetElement({0, 0}, 0); col_indices.SetElement({0, 0}, 0); values.SetElement({0, 0}, a_matrix.ElementAt({0, 0, 0}));
-    row_indices.SetElement({1, 0}, 1); col_indices.SetElement({1, 0}, 1); values.SetElement({1, 0}, a_matrix.ElementAt({1, 1, 0}));
-    row_indices.SetElement({2, 0}, 2); col_indices.SetElement({2, 0}, 0); values.SetElement({2, 0}, a_matrix.ElementAt({0, 2, 0}));
-    row_indices.SetElement({3, 0}, 2); col_indices.SetElement({3, 0}, 2); values.SetElement({3, 0}, a_matrix.ElementAt({2, 2, 0}));
-    row_indices.SetElement({4, 0}, 3); col_indices.SetElement({4, 0}, 1); values.SetElement({4, 0}, a_matrix.ElementAt({1, 3, 0}));
+
+    int row_indices_coords[] = {0, 0};
+    // int col_indices_coords[] = {0, 0};
+    // int values_coords[] = {0, 0};
+
+    row_indices.SetElement(row_indices_coords, 0);
+    // row_indices.SetElement({0, 0}, 0); col_indices.SetElement({0, 0}, 0); values.SetElement({0, 0}, a_matrix.ElementAt({0, 0, 0}));
+    // row_indices.SetElement({1, 0}, 1); col_indices.SetElement({1, 0}, 1); values.SetElement({1, 0}, a_matrix.ElementAt({1, 1, 0}));
+    // row_indices.SetElement({2, 0}, 2); col_indices.SetElement({2, 0}, 0); values.SetElement({2, 0}, a_matrix.ElementAt({0, 2, 0}));
+    // row_indices.SetElement({3, 0}, 2); col_indices.SetElement({3, 0}, 2); values.SetElement({3, 0}, a_matrix.ElementAt({2, 2, 0}));
+    // row_indices.SetElement({4, 0}, 3); col_indices.SetElement({4, 0}, 1); values.SetElement({4, 0}, a_matrix.ElementAt({1, 3, 0}));
 
     // Execute reference dense matrix multiplication
     SparseMatrixMulFwdF32Test testObj;

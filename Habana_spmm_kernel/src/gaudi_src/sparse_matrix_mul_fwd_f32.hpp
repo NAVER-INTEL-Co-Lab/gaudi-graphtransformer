@@ -1,5 +1,5 @@
 /**********************************************************************
-Copyright (c) 2021 Habana Labs.
+Copyright (c) 2020 Habana Labs.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
@@ -14,38 +14,29 @@ OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY TH
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ********************************************************************/
 
-#ifndef SPARSE_MATRIX_MUL_FWD_F32_TEST_HPP
-#define SPARSE_MATRIX_MUL_FWD_F32_TEST_HPP
+#ifndef _SPARSE_MATRIX_MUL_FWD_F32_HPP
+#define _SPARSE_MATRIX_MUL_FWD_F32_HPP
 
-#include "test_base.hpp"
-#include "tensor.h"
-#include "sparse_matrix_mul_fwd_f32.hpp"
+#include "gc_interface.h"
+#include "tpc_kernel_lib_interface.h"
 
-
-class SparseMatrixMulFwdF32Test : public TestBase
+class SparseMatrixMulFwdF32
 {
-public:
-    SparseMatrixMulFwdF32Test() {}
-    ~SparseMatrixMulFwdF32Test() {}
-    int runTest();
+    public:
+        SparseMatrixMulFwdF32() {}
+        virtual ~SparseMatrixMulFwdF32() {}
 
-    inline static void matrix_mul_reference_implementation(
-            const float_3DTensor& input0,
-            const float_3DTensor& input1,
-            float_3DTensor& output);
-    
-    inline static void spmm_reference_implementation(
-            const float_2DTensor& row_indices,
-            const float_2DTensor& col_indices,
-            const float_2DTensor& values,
-            const float_3DTensor& b_matrix,
-            float_3DTensor& output);
-private:
-    SparseMatrixMulFwdF32Test(const SparseMatrixMulFwdF32Test& other) = delete;
-    SparseMatrixMulFwdF32Test& operator=(const SparseMatrixMulFwdF32Test& other) = delete;
+        virtual tpc_lib_api::GlueCodeReturn
+        GetGcDefinitions(tpc_lib_api::HabanaKernelParams*      in_defs,
+                     tpc_lib_api::HabanaKernelInstantiation* out_defs);
 
+        virtual tpc_lib_api::GlueCodeReturn GetKernelName(
+                char kernelName [tpc_lib_api::MAX_NODE_NAME]);                            
 
+    private:
+        SparseMatrixMulFwdF32(const SparseMatrixMulFwdF32& other) = delete;
+        SparseMatrixMulFwdF32& operator=(const SparseMatrixMulFwdF32& other) = delete;
 };
 
-#endif /* SPARSE_MATRIX_MUL_FWD_F32_TEST_HPP */
+#endif
 
