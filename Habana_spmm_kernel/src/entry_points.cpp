@@ -15,6 +15,7 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVE
 ********************************************************************/
 
 #include "matrix_mul_fwd_f32.hpp"
+#include "sparse_matrix_mul_fwd_f32.hpp"
 #include "entry_points.hpp"
 #include <stdio.h>
 #include<cstring>
@@ -33,6 +34,8 @@ tpc_lib_api::GlueCodeReturn GetKernelGuids( _IN_    tpc_lib_api::DeviceId       
            MatrixMulFwdF32 MatrixMulFwdF32Instance;
            MatrixMulFwdF32Instance.GetKernelName(guids[GAUDI_KERNEL_MATRIXMUL_FWD_F32].name);
            
+           SparseMatrixMulFwdF32 SparseMatrixMulFwdF32Instance;
+           SparseMatrixMulFwdF32Instance.GetKernelName(guids[GAUDI_KERNEL_SPARSE_MATRIXMUL_FWD_F32].name);
         }
 
         if (kernelCount != nullptr)
@@ -68,6 +71,13 @@ InstantiateTpcKernel(_IN_  tpc_lib_api::HabanaKernelParams* params,
     if (strcmp(params->guid.name, kernelName) == 0)
     {
         return MatrixMulFwdF32Instance.GetGcDefinitions(params,instance);
+    }
+
+    SparseMatrixMulFwdF32 SparseMatrixMulFwdF32Instance;
+    SparseMatrixMulFwdF32Instance.GetKernelName(kernelName);
+    if (strcmp(params->guid.name, kernelName) == 0)
+    {
+        return SparseMatrixMulFwdF32Instance.GetGcDefinitions(params,instance);
     }
 
     return tpc_lib_api::GLUE_NODE_NOT_FOUND;

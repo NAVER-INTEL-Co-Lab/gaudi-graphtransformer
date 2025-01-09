@@ -104,8 +104,8 @@ int SparseMatrixMulFwdF32Test::runTest(){
     float_3DTensor b_matrix(fmInitializer_b);
     b_matrix.InitRand(1.0f, 10.0f);
 
-    float_3DTensor c_matrix_dense(fmInitializer_c);
-    float_3DTensor c_matrix_sparse(fmInitializer_c);
+    float_3DTensor c_matrix(fmInitializer_c);
+    float_3DTensor c_matrix_ref(fmInitializer_c);
 
 
     // Make a matrix sparse 
@@ -122,15 +122,6 @@ int SparseMatrixMulFwdF32Test::runTest(){
     sparse_coord[1] = 3 ; sparse_coord[0] = 1; a_matrix.SetElement(sparse_coord,0);
     sparse_coord[1] = 3 ; sparse_coord[0] = 2; a_matrix.SetElement(sparse_coord,0);
     sparse_coord[1] = 3 ; sparse_coord[0] = 3; a_matrix.SetElement(sparse_coord,0);
-
-    for(int i=0;i<row;i++){
-        for(int j=0;j<common;j++){
-            for(int k=0;k<batch;k++){
-                int32_t coord[] = {j, i, k};
-                printf("a_matrix[%d][%d][%d]: %f\n", i, j, k, a_matrix.ElementAt(coord));
-            }
-        }
-    }
 
     // Sparse representation of `a_matrix`
     uint64_t sparseInitializer[] = {8, 1};
@@ -156,14 +147,16 @@ int SparseMatrixMulFwdF32Test::runTest(){
     }
 
     // Execute sparse matrix multiplication
-    spmm_reference_implementation(row_indices, col_indices, values, b_matrix, c_matrix_sparse);
+    spmm_reference_implementation(row_indices, col_indices, values, b_matrix, c_matrix_ref);
 
     // generate input for query call
     m_in_defs.deviceId = tpc_lib_api::DEVICE_ID_GAUDI;
 
-    m_in_defs.inputTensorNr = 2;
-    LoadTensorToGcDescriptor(&(m_in_defs.inputTensors[0]), a_matrix);
-    LoadTensorToGcDescriptor(&(m_in_defs.inputTensors[1]), b_matrix);
+    m_in_defs.inputTensorNr = 4;
+    LoadTensorToGcDescriptor(&(m_in_defs.inputTensors[0]), row_indices);
+    LoadTensorToGcDescriptor(&(m_in_defs.inputTensors[1]), col_indices);
+    LoadTensorToGcDescriptor(&(m_in_defs.inputTensors[2]), values);
+    LoadTensorToGcDescriptor(&(m_in_defs.inputTensors[3]), b_matrix);
 
     m_in_defs.outputTensorNr = 1;
     LoadTensorToGcDescriptor(&(m_in_defs.outputTensors[0]), c_matrix);
@@ -173,7 +166,7 @@ int SparseMatrixMulFwdF32Test::runTest(){
     tpc_lib_api::GlueCodeReturn result = GetKernelGuids(tpc_lib_api::DEVICE_ID_GAUDI, &kernelCount, guids);
     guids = new tpc_lib_api::GuidInfo[kernelCount];
     result = GetKernelGuids(tpc_lib_api::DEVICE_ID_GAUDI, &kernelCount, guids);
-    
+
     if (result != tpc_lib_api::GLUE_SUCCESS)
     {
         std::cout << "Can't get kernel name!! " << result << std::endl;
@@ -181,7 +174,7 @@ int SparseMatrixMulFwdF32Test::runTest(){
         return -1;
     }
 
-    strcpy(m_in_defs.guid.name, guids[GAUDI_KERNEL_MATRIXMUL_FWD_F32].name);
+    strcpy(m_in_defs.guid.name, guids[GAUDI_KERNEL_SPARSE_MATRIXMUL_FWD_F32].name);
     result  = InstantiateTpcKernel(&m_in_defs,&m_out_defs);
     if (result != tpc_lib_api::GLUE_SUCCESS)
     {

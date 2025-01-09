@@ -26,7 +26,10 @@ void main(tensor row_indices,  // Row indices of sparse matrix A (CSR or COO for
           tensor col_indices, // Column indices of sparse matrix A
           tensor values,      // Non-zero values of sparse matrix A
           tensor bMatrix,     // Dense matrix B
-          tensor cMatrix)     // Output dense matrix C
+          tensor cMatrix,
+          int ROW,
+          int COL,
+          int COMMON)     // Output dense matrix C
 {
     const int5 indexSpaceStart = get_index_space_offset();
     const int5 indexSpaceEnd = get_index_space_size() + indexSpaceStart;
@@ -40,14 +43,12 @@ void main(tensor row_indices,  // Row indices of sparse matrix A (CSR or COO for
     // Loop over rows of sparse matrix A
     for (int row = indexSpaceStart[0]; row < indexSpaceEnd[0]; row++) {
         int startIdx = s_i32_ld_tnsr(row_indices, row);     // Start index in col_indices and values
-        int endIdx = s_i32_ld_tnsr(row_indices, row + 1);   // End index for the row (exclusive)
-
-        // Initialize accumulator for the row
         float64 accums[numColsB] = {0};
 
         // Loop over non-zero entries in the current row
         for (int nzIdx = startIdx; nzIdx < endIdx; nzIdx++) {
-            int col = s_i32_ld_tnsr(col_indices, nzIdx);    // Column index of the non-zero value
+            int row_A = s_i32_ld_tnsr(row_indices, row);    // Row index of the non-zero value  
+            int col_A = s_i32_ld_tnsr(col_indices, nzIdx);    // Column index of the non-zero value
             float value = v_f32_ld_g(values, nzIdx);       // Non-zero value from sparse matrix
 
             // Compute row of A * column of B
@@ -69,5 +70,7 @@ void main(tensor row_indices,  // Row indices of sparse matrix A (CSR or COO for
             cCoords[1] = j;
             v_f32_st_tnsr(cCoords, cMatrix, accums[j]);
         }
+
+
     }
 }

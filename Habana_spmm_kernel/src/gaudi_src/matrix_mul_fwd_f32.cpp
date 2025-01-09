@@ -36,6 +36,7 @@ tpc_lib_api::GlueCodeReturn MatrixMulFwdF32::GetGcDefinitions(
             tpc_lib_api::HabanaKernelInstantiation* out_defs)
 {
     tpc_lib_api::GlueCodeReturn retVal;
+    const int c_unrollCount = 4;
 
     /*************************************************************************************
     *   Stage I - validate input
