@@ -1,5 +1,5 @@
-rm -rf ./tmp
-mkdir tmp
-cd tmp
+rm -rf ./build
+mkdir build
+cd build
 cmake ..
 make

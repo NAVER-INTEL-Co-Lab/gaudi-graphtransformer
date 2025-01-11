@@ -30,16 +30,16 @@ public:
     int runTest();
 
     inline static void matrix_mul_reference_implementation(
-            const float_3DTensor& input0,
-            const float_3DTensor& input1,
-            float_3DTensor& output);
+            const float_2DTensor& input0,
+            const float_2DTensor& input1,
+            float_2DTensor& output);
     
     inline static void spmm_reference_implementation(
-            const float_2DTensor& row_indices,
-            const float_2DTensor& col_indices,
+            const int32_2DTensor& row_indices,
+            const int32_2DTensor& col_indices,
             const float_2DTensor& values,
-            const float_3DTensor& b_matrix,
-            float_3DTensor& output);
+            const float_2DTensor& b_matrix,
+            float_2DTensor& output);
 private:
     SparseMatrixMulFwdF32Test(const SparseMatrixMulFwdF32Test& other) = delete;
     SparseMatrixMulFwdF32Test& operator=(const SparseMatrixMulFwdF32Test& other) = delete;

@@ -16,6 +16,7 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVE
 
 #include <iostream>
 #include "matrix_mul_fwd_f32_test.hpp"
+#include "sparse_matrix_mul_fwd_f32_test.hpp"
 
 int check_arg(int argc, char** argv, const char* device, const char* test)
 {
@@ -93,18 +94,32 @@ int main(int argc, char** argv)
     }
 
 
-    if(check_arg(argc, argv, "Gaudi", "MatrixMulFwdF32Test"))
+    // if(check_arg(argc, argv, "Gaudi", "MatrixMulFwdF32Test"))
+    // {
+    //     MatrixMulFwdF32Test testMatrixMulFwdF32;
+    //     testMatrixMulFwdF32.SetUp();
+    //     result = testMatrixMulFwdF32.runTest();
+    //     testMatrixMulFwdF32.TearDown();
+    //     testCount ++;
+    //     if (result != 0)
+    //     {
+    //         return result;
+    //     }
+    // }
+
+    SparseMatrixMulFwdF32Test testSparseMatrixMulFwdF32;
+    if(check_arg(argc, argv, "Gaudi2", "SparseMatrixMulFwdF32Test"))
     {
-        MatrixMulFwdF32Test testMatrixMulFwdF32;
-        testMatrixMulFwdF32.SetUp();
-        result = testMatrixMulFwdF32.runTest();
-        testMatrixMulFwdF32.TearDown();
+        testSparseMatrixMulFwdF32.SetUp();
+        result = testSparseMatrixMulFwdF32.runTest();
+        testSparseMatrixMulFwdF32.TearDown();
         testCount ++;
         if (result != 0)
         {
             return result;
         }
     }
+
 
     
     if(testCount > 0)

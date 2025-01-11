@@ -13,6 +13,7 @@ gaudi2_src
 
 # Generate a list of all TPC headers for compilation dependencies.
 file(GLOB TPC_GAUDI_HEADERS ../kernels/gaudi/*.h)
+file(GLOB TPC_GAUDI2_HEADERS ../kernels/gaudi2/*.h)
 
 # list(FILTER TPC_GAUDI_HEADERS EXCLUDE REGEX ".*sparse_matrix_mul_fwd_f32.c")
 

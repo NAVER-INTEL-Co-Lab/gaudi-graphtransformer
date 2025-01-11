@@ -35,7 +35,7 @@ tpc_lib_api::GlueCodeReturn SparseMatrixMulFwdF32::GetGcDefinitions(
             tpc_lib_api::HabanaKernelInstantiation* out_defs)
 {
     tpc_lib_api::GlueCodeReturn retVal;
-    const int c_unrollCount = 4;
+    // const int c_unrollCount = 4;
 
     /*************************************************************************************
     *   Stage I - validate input
@@ -77,7 +77,7 @@ tpc_lib_api::GlueCodeReturn SparseMatrixMulFwdF32::GetGcDefinitions(
         in_defs->inputTensors[1].geometry.dataType != tpc_lib_api::DATA_I32 ||
         in_defs->inputTensors[2].geometry.dataType != tpc_lib_api::DATA_I32 ||
         in_defs->inputTensors[3].geometry.dataType != tpc_lib_api::DATA_F32 ||
-        in_defs->outputTensors[0].geometry.dataType != tpc_lib_api::DATA_F32||
+        in_defs->outputTensors[0].geometry.dataType != tpc_lib_api::DATA_F32
         )
     {
         in_defs->inputTensors[0].geometry.dataType = tpc_lib_api::DATA_I32;
@@ -104,7 +104,7 @@ tpc_lib_api::GlueCodeReturn SparseMatrixMulFwdF32::GetGcDefinitions(
         (in_defs->outputTensors[0].geometry.maxSizes[0] + c_vlen - 1) / c_vlen;
     out_defs->indexSpaceGeometry[1] = (in_defs->outputTensors[0].geometry.maxSizes[1]);
     out_defs->indexSpaceGeometry[2] = (in_defs->inputTensors[3].geometry.maxSizes[1]);
-    out_defs->indexSpaceGeometry[3] = (in_defs->inputTensors[0].geometry.maxSizes[0])
+    out_defs->indexSpaceGeometry[3] = (in_defs->inputTensors[0].geometry.maxSizes[0]);
 
     // Matrix C - Tensor Access Pattern
     out_defs->outputTensorAccessPattern[0].mapping[0].indexSpaceDim     = 0;

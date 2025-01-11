@@ -16,6 +16,7 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVE
 
 #include "matrix_mul_fwd_f32.hpp"
 #include "sparse_matrix_mul_fwd_f32.hpp"
+
 #include "entry_points.hpp"
 #include <stdio.h>
 #include<cstring>
@@ -33,9 +34,7 @@ tpc_lib_api::GlueCodeReturn GetKernelGuids( _IN_    tpc_lib_api::DeviceId       
            
            MatrixMulFwdF32 MatrixMulFwdF32Instance;
            MatrixMulFwdF32Instance.GetKernelName(guids[GAUDI_KERNEL_MATRIXMUL_FWD_F32].name);
-           
-           SparseMatrixMulFwdF32 SparseMatrixMulFwdF32Instance;
-           SparseMatrixMulFwdF32Instance.GetKernelName(guids[GAUDI_KERNEL_SPARSE_MATRIXMUL_FWD_F32].name);
+
         }
 
         if (kernelCount != nullptr)
@@ -44,7 +43,20 @@ tpc_lib_api::GlueCodeReturn GetKernelGuids( _IN_    tpc_lib_api::DeviceId       
             *kernelCount = GAUDI_KERNEL_MAX_EXAMPLE_KERNEL;
         }
     }
-    
+    else if (deviceId == tpc_lib_api::DEVICE_ID_GAUDI2)
+    {
+        if (guids != nullptr )
+        {
+           SparseMatrixMulFwdF32 SparseMatrixMulFwdF32Instance;
+           SparseMatrixMulFwdF32Instance.GetKernelName(guids[GAUDI2_KERNEL_SPARSE_MATRIXMUL_FWD_F32].name);
+        }
+
+        if (kernelCount != nullptr)
+        {
+            // currently the library support 8 kernel.
+            *kernelCount = GAUDI2_KERNEL_MAX_EXAMPLE_KERNEL;
+        }
+    }
     else
     {
         if (kernelCount != nullptr)
