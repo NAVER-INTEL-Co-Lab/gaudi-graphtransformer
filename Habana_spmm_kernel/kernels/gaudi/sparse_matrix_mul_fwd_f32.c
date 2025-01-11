@@ -19,7 +19,6 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVE
 #define VECTORLENGTH 64
 #define ACCUMWIDTH  1
 
-
 void main(tensor row_indices,  // Row indices of sparse matrix A (CSR or COO format)
           tensor col_indices, // Column indices of sparse matrix A
           tensor values,      // Non-zero values of sparse matrix A
