@@ -18,8 +18,6 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVE
 
 #define VECTORLENGTH 64
 #define ACCUMWIDTH  1
-#define PARTWIDTH  (ACCUMWIDTH * VECTORLENGTH)
-#define PARTHEIGHT  6
 
 
 void main(tensor row_indices,  // Row indices of sparse matrix A (CSR or COO format)
@@ -39,37 +37,48 @@ void main(tensor row_indices,  // Row indices of sparse matrix A (CSR or COO for
     const int numValues = get_dim_size(values, 0);   // Number of non-zero values in sparse matrix A
 
     int5 cCoords = {0};
+    int5 aCoords = {0};
+    int5 bCoords = {0};
 
-    // Loop over rows of sparse matrix A
-    for (int row = indexSpaceStart[0]; row < indexSpaceEnd[0]; row++) {
-        int startIdx = s_i32_ld_tnsr(row_indices, row);     // Start index in col_indices and values
-        float64 accums[numColsB] = {0};
+    // Loop over row vectors sparse matrix A
+    for (int sparseIdx = indexSpaceStart[3]; sparseIdx < indexSpaceEnd[3]; sparseIdx++) {
+        aCoords[3] = sparseIdx;
+        
+        // I don't know how to do this but, read just one values at a time
+        int aRow = s_i32_ld_tnsr(aCoords, row_indices);
+        int aCol = s_i32_ld_tnsr(aCoords, col_indices);
+        float aVal = s_f32_ld_tnsr(aCoords, values);
+        float64 aValLane = value;
 
-        // Loop over non-zero entries in the current row
-        for (int nzIdx = startIdx; nzIdx < endIdx; nzIdx++) {
-            int row_A = s_i32_ld_tnsr(row_indices, row);    // Row index of the non-zero value  
-            int col_A = s_i32_ld_tnsr(col_indices, nzIdx);    // Column index of the non-zero value
-            float value = v_f32_ld_g(values, nzIdx);       // Non-zero value from sparse matrix
+        // Accumulate results for the row of output matrix C
+        for (int denseCol = indexSpaceStart[0]; denseCol < indexSpaceEnd[0]; denseCol+= VECTORLENGTH) {
+        // Need to fix it 
+            bCoords[0] = denseCol;
+            cCoords[0]  = denseCol;
 
-            // Compute row of A * column of B
-            int5 bCoords = {0};
-            bCoords[0] = col;
+            for(int bRow = indexSpaceStart[2]; bRow < indexSpaceEnd[2]; bRow++) {
+                if (aCol != bRow) {
+                    continue;
+                }
 
-            // Load dense matrix B column corresponding to non-zero column in sparse matrix A
-            float64 bValue = v_f32_ld_tnsr_b(bCoords, bMatrix);
+                bCoords[2] = bRow;
 
-            // Accumulate results for the row of output matrix C
-            for (int j = 0; j < numColsB; j++) {
-                accums[j] = v_f32_mac_b(bValue[j], value, accums[j]);
+                for(int cRow = indexSpaceStart[1]; cRow < indexSpaceEnd[1]; cRow++){
+                    if (aRow != cRow) {
+                        continue;
+                    }
+
+                    cCoords[1] = cRow;
+
+                    float64 denseB = v_f32_ld_tnsr(bCoords, bMatrix); 
+                    float64 accum = v_f32_ld_tnsr(cCoords, cMatrix);
+                    float64 result = v_f32_mul_vb(denseB, aValLane);
+                    v_f32_st_tnsr(cCoords, cMatrix, result);
+                }
             }
         }
+    }
 
-        // Store accumulated results in the output matrix C
-        cCoords[0] = row;
-        for (int j = 0; j < numColsB; j++) {
-            cCoords[1] = j;
-            v_f32_st_tnsr(cCoords, cMatrix, accums[j]);
-        }
 
 
     }

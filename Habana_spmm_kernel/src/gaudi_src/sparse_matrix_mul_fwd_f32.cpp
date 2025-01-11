@@ -97,13 +97,16 @@ tpc_lib_api::GlueCodeReturn SparseMatrixMulFwdF32::GetGcDefinitions(
 
 
     // If we split same tensor size as GEMM multiplications we can use the same index space geometry
+    // MODIFICATION HERE SPLIT WITH INDEX
     out_defs->indexSpaceRank = 3;
+
+    // [0] Split Row , [1] Split Col, [2] Split COO Formats
     out_defs->indexSpaceGeometry[0] =
         (in_defs->outputTensors[0].geometry.maxSizes[0] + c_vlen - 1) / c_vlen;
     out_defs->indexSpaceGeometry[1] =
         (in_defs->outputTensors[0].geometry.maxSizes[1] + c_height_step_size - 1) / c_height_step_size;
     out_defs->indexSpaceGeometry[2] =
-        std::max(in_defs->outputTensors[0].geometry.maxSizes[2], (uint64_t)1);
+        std::max(in_defs->inputTensors[0].geometry.maxSizes[2], (uint64_t)1);
 
     // Matrix C - Tensor Access Pattern
     out_defs->outputTensorAccessPattern[0].mapping[0].indexSpaceDim     = 0;
@@ -116,29 +119,28 @@ tpc_lib_api::GlueCodeReturn SparseMatrixMulFwdF32::GetGcDefinitions(
     out_defs->outputTensorAccessPattern[0].mapping[1].start_b = 0;
     out_defs->outputTensorAccessPattern[0].mapping[1].end_b   = c_height_step_size - 1;
     
-    // Actually no operation for 3rd dimension batch size 1
-    out_defs->outputTensorAccessPattern[0].mapping[2].indexSpaceDim     = 2;
-    out_defs->outputTensorAccessPattern[0].mapping[2].a = 1;
-    out_defs->outputTensorAccessPattern[0].mapping[2].start_b = 0;
-    out_defs->outputTensorAccessPattern[0].mapping[2].end_b   = 1 - 1;
+    // NOT USE 3D TENSOR
+    // // Actually no operation for 3rd dimension batch size 1
+    // out_defs->outputTensorAccessPattern[0].mapping[2].indexSpaceDim     = 2;
+    // out_defs->outputTensorAccessPattern[0].mapping[2].a = 1;
+    // out_defs->outputTensorAccessPattern[0].mapping[2].start_b = 0;
+    // out_defs->outputTensorAccessPattern[0].mapping[2].end_b   = 1 - 1;
 
-    // Matrix A - Tensor Access Pattern
-    out_defs->inputTensorAccessPattern[0].mapping[0].indexSpaceDim     = 0;
-    out_defs->inputTensorAccessPattern[0].mapping[0].a = 0;
-    out_defs->inputTensorAccessPattern[0].mapping[0].start_b = 0;
-    out_defs->inputTensorAccessPattern[0].mapping[0].end_b =
-        in_defs->inputTensors[0].geometry.maxSizes[0] - 1;
+    // ROW INDICES - [0] --> SPlit in to Col    [8X1] 
 
-    out_defs->inputTensorAccessPattern[0].mapping[1].indexSpaceDim     = 1;
-    out_defs->inputTensorAccessPattern[0].mapping[1].a = c_height_step_size;
-    out_defs->inputTensorAccessPattern[0].mapping[1].start_b = 0;
-    out_defs->inputTensorAccessPattern[0].mapping[1].end_b   = c_height_step_size - 1;
+    for (int i=0; i<3;i++){
+        out_defs->inputTensorAccessPattern[i].mapping[0].indexSpaceDim     = 0;
+        out_defs->inputTensorAccessPattern[i].mapping[0].a = 1;
+        out_defs->inputTensorAccessPattern[i].mapping[0].start_b = 0;
+        out_defs->inputTensorAccessPattern[i].mapping[0].end_b = 0;
 
-    // Actually no operation for 3rd dimension batch size 1
-    out_defs->inputTensorAccessPattern[0].mapping[2].indexSpaceDim     = 2;
-    out_defs->inputTensorAccessPattern[0].mapping[2].a = 1;
-    out_defs->inputTensorAccessPattern[0].mapping[2].start_b = 0;
-    out_defs->inputTensorAccessPattern[0].mapping[2].end_b   = 1 - 1;
+        out_defs->inputTensorAccessPattern[i].mapping[1].indexSpaceDim     = 1;
+        out_defs->inputTensorAccessPattern[i].mapping[1].a = 1;
+        out_defs->inputTensorAccessPattern[i].mapping[1].start_b = 0;
+        out_defs->inputTensorAccessPattern[i].mapping[1].end_b   = 0;
+    }
+
+   
 
     // Matrix B - Tensor Access Pattern - 4th inputTensors
     out_defs->inputTensorAccessPattern[3].mapping[0].indexSpaceDim     = 0;
