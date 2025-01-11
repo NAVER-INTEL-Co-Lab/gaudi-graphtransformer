@@ -94,18 +94,18 @@ int main(int argc, char** argv)
     }
 
 
-    // if(check_arg(argc, argv, "Gaudi", "MatrixMulFwdF32Test"))
-    // {
-    //     MatrixMulFwdF32Test testMatrixMulFwdF32;
-    //     testMatrixMulFwdF32.SetUp();
-    //     result = testMatrixMulFwdF32.runTest();
-    //     testMatrixMulFwdF32.TearDown();
-    //     testCount ++;
-    //     if (result != 0)
-    //     {
-    //         return result;
-    //     }
-    // }
+    if(check_arg(argc, argv, "Gaudi", "MatrixMulFwdF32Test"))
+    {
+        MatrixMulFwdF32Test testMatrixMulFwdF32;
+        testMatrixMulFwdF32.SetUp();
+        result = testMatrixMulFwdF32.runTest();
+        testMatrixMulFwdF32.TearDown();
+        testCount ++;
+        if (result != 0)
+        {
+            return result;
+        }
+    }
 
     SparseMatrixMulFwdF32Test testSparseMatrixMulFwdF32;
     if(check_arg(argc, argv, "Gaudi2", "SparseMatrixMulFwdF32Test"))

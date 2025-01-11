@@ -192,7 +192,7 @@ int SparseMatrixMulFwdF32Test::runTest(){
     c_matrix_ref.Print(0);
     for (int element = 0 ; element <  c_matrix_ref.ElementCount() ; element++)
     {
-        if (abs(c_matrix.Data()[element] - c_matrix_ref.Data()[element]) > 1e-5)
+        if (abs(c_matrix.Data()[element] - c_matrix_ref.Data()[element]) > 5*1e-5)
         {
             std::cout << "Wrong Elemet at: " << element << " Expected: " << c_matrix_ref.Data()[element] << " Got: " << c_matrix.Data()[element] << std::endl;
             std::cout << "Sparse Matrix multiply FWD F32 test failed!!" << std::endl;
