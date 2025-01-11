@@ -54,8 +54,8 @@ void MatrixMulFwdF32Test::matrix_mul_reference_implementation(
 
 int MatrixMulFwdF32Test::runTest()
 {
-    const int col = 3;
-    const int row  = 5;
+    const int col = 65;
+    const int row  = 6;
     const int common = 4;
     const int batch  = 1;
 
