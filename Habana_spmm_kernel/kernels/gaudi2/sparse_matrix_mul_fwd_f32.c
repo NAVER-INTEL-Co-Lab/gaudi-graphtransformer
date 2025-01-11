@@ -32,29 +32,50 @@ void main(tensor row_indices,  // Row indices of sparse matrix A (CSR or COO for
     // const int numColsB = get_dim_size(bMatrix, 1);   // Number of columns in dense matrix B
     // const int numValues = get_dim_size(values, 0);   // Number of non-zero values in sparse matrix A
 
-    int5 cCoords = {0};
-    int5 aCoords = {0};
-    int5 bCoords = {0};
+    int5 cCoords = {0,0,0,0,0};
+    int5 aCoords = {0,0,0,0,0};
+    int5 bCoords = {0,0,0,0,0};
+
+    printf("\n\n\n\n");
+    printf("Current Index Start\n");
+    printf("%d ", indexSpaceStart[0]);
+    printf("%d ", indexSpaceStart[1]);
+    printf("%d ", indexSpaceStart[2]);
+    printf("%d \n", indexSpaceStart[3]);
+
+
+    printf("Current Index End\n");
+    printf("%d ", indexSpaceEnd[0]);
+    printf("%d ", indexSpaceEnd[1]);
+    printf("%d ", indexSpaceEnd[2]);
+    printf("%d \n", indexSpaceEnd[3]);
+
 
     // Loop over row vectors sparse matrix A
     for (int sparseIdx = indexSpaceStart[3]; sparseIdx < indexSpaceEnd[3]; sparseIdx++) {
-        aCoords[3] = sparseIdx;
+        aCoords[0] = sparseIdx;
+        // printf("Sparse Idx: %d\n", sparseIdx);
         
+        // printf("Acoords\n");
+        // printf("%d ", aCoords[0]);
+        // printf("%d ", aCoords[1]);
+        // printf("%d ", aCoords[2]);
+        // printf("%d \n", aCoords[3]);
         // I don't know how to do this but, read just one values at a time
         // int aRow = v_i32_ld_tnsr_partial_b(aCoords, row_indices);
         // __global__ int* validCountAddr = (__global__ int*)gen_addr(validCountCoord, validCount);
-        __global__ char * p_aValue0 = gen_addr(aCoords, row_indices);
-        __global__ char * p_aValue1 = gen_addr(aCoords, col_indices);
-        __global__ char * p_aValue2 = gen_addr(aCoords, values);
+        __global__ int * p_aValue0 = gen_addr(aCoords, row_indices);
+        __global__ int * p_aValue1 = gen_addr(aCoords, col_indices);
+        __global__ float * p_aValue2 = gen_addr(aCoords, values);
 
         int aRow = s_i32_ld_g(p_aValue0);
         int aCol = s_i32_ld_g(p_aValue1);
         float64 aVal = s_f32_ld_g(p_aValue2);
 
-        printf("aRow: %d\n", aRow);
-        printf("aCol: %d\n", aCol);
-        printf("aVal: %d\n", aVal[0]);
-
+        // printf("Loaded values: ");
+        // printf("aRow: %d\n", aRow);
+        // printf("aCol: %d\n", aCol);
+        // printf("aVal: %f\n", aVal[0]);
 
         // Accumulate results for the row of output matrix C
         for (int denseCol = indexSpaceStart[0]; denseCol < indexSpaceEnd[0]; denseCol+= VECTORLENGTH) {
@@ -67,7 +88,7 @@ void main(tensor row_indices,  // Row indices of sparse matrix A (CSR or COO for
                     continue;
                 }
 
-                bCoords[2] = bRow;
+                bCoords[1] = bRow;
 
                 for(int cRow = indexSpaceStart[1]; cRow < indexSpaceEnd[1]; cRow++){
                     if (aRow != cRow) {

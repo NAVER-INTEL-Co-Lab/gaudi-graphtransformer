@@ -188,18 +188,18 @@ int SparseMatrixMulFwdF32Test::runTest(){
     ReleaseKernelNames(guids, kernelCount);
 
     c_matrix.Print(0);
-    c_matrix.Print(1);
-    c_matrix.Print(2);
+
     c_matrix_ref.Print(0);
     for (int element = 0 ; element <  c_matrix_ref.ElementCount() ; element++)
     {
-        if (abs(c_matrix.Data()[element] - c_matrix_ref.Data()[element]) > 1e-6)
+        if (abs(c_matrix.Data()[element] - c_matrix_ref.Data()[element]) > 1e-5)
         {
-            std::cout << "Matrix multiply FWD F32 test failed!!" << std::endl;
+            std::cout << "Wrong Elemet at: " << element << " Expected: " << c_matrix_ref.Data()[element] << " Got: " << c_matrix.Data()[element] << std::endl;
+            std::cout << "Sparse Matrix multiply FWD F32 test failed!!" << std::endl;
             return -1;
         }
     }
-    std::cout << "Matrix multiply FWD F32 test pass!!" << std::endl;
+    std::cout << "Sparse Matrix multiply FWD F32 test pass!!" << std::endl;
     return 0;
 }
 

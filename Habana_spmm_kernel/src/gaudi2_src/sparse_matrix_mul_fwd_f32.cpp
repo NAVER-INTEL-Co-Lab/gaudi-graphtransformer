@@ -75,14 +75,14 @@ tpc_lib_api::GlueCodeReturn SparseMatrixMulFwdF32::GetGcDefinitions(
     // Check 4 inputs and output data types
     if (in_defs->inputTensors[0].geometry.dataType != tpc_lib_api::DATA_I32 ||
         in_defs->inputTensors[1].geometry.dataType != tpc_lib_api::DATA_I32 ||
-        in_defs->inputTensors[2].geometry.dataType != tpc_lib_api::DATA_I32 ||
+        in_defs->inputTensors[2].geometry.dataType != tpc_lib_api::DATA_F32 ||
         in_defs->inputTensors[3].geometry.dataType != tpc_lib_api::DATA_F32 ||
         in_defs->outputTensors[0].geometry.dataType != tpc_lib_api::DATA_F32
         )
     {
         in_defs->inputTensors[0].geometry.dataType = tpc_lib_api::DATA_I32;
         in_defs->inputTensors[1].geometry.dataType = tpc_lib_api::DATA_I32;
-        in_defs->inputTensors[2].geometry.dataType = tpc_lib_api::DATA_I32;
+        in_defs->inputTensors[2].geometry.dataType = tpc_lib_api::DATA_F32;
         in_defs->inputTensors[3].geometry.dataType = tpc_lib_api::DATA_F32;
         in_defs->outputTensors[0].geometry.dataType = tpc_lib_api::DATA_F32;
 
