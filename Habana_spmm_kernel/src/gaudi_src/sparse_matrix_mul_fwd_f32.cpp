@@ -35,6 +35,7 @@ tpc_lib_api::GlueCodeReturn SparseMatrixMulFwdF32::GetGcDefinitions(
             tpc_lib_api::HabanaKernelInstantiation* out_defs)
 {
     tpc_lib_api::GlueCodeReturn retVal;
+    const int c_unrollCount = 4;
 
     /*************************************************************************************
     *   Stage I - validate input
@@ -72,16 +73,16 @@ tpc_lib_api::GlueCodeReturn SparseMatrixMulFwdF32::GetGcDefinitions(
 
     // validate input and output data type
     // Check 4 inputs and output data types
-    if (in_defs->inputTensors[0].geometry.dataType != tpc_lib_api::DATA_F32 ||
-        in_defs->inputTensors[1].geometry.dataType != tpc_lib_api::DATA_F32 ||
-        in_defs->inputTensors[2].geometry.dataType != tpc_lib_api::DATA_F32 ||
+    if (in_defs->inputTensors[0].geometry.dataType != tpc_lib_api::DATA_I32 ||
+        in_defs->inputTensors[1].geometry.dataType != tpc_lib_api::DATA_I32 ||
+        in_defs->inputTensors[2].geometry.dataType != tpc_lib_api::DATA_I32 ||
         in_defs->inputTensors[3].geometry.dataType != tpc_lib_api::DATA_F32 ||
         in_defs->outputTensors[0].geometry.dataType != tpc_lib_api::DATA_F32||
         )
     {
-        in_defs->inputTensors[0].geometry.dataType = tpc_lib_api::DATA_F32;
-        in_defs->inputTensors[1].geometry.dataType = tpc_lib_api::DATA_F32;
-        in_defs->inputTensors[2].geometry.dataType = tpc_lib_api::DATA_F32;
+        in_defs->inputTensors[0].geometry.dataType = tpc_lib_api::DATA_I32;
+        in_defs->inputTensors[1].geometry.dataType = tpc_lib_api::DATA_I32;
+        in_defs->inputTensors[2].geometry.dataType = tpc_lib_api::DATA_I32;
         in_defs->inputTensors[3].geometry.dataType = tpc_lib_api::DATA_F32;
         in_defs->outputTensors[0].geometry.dataType = tpc_lib_api::DATA_F32;
 
@@ -93,20 +94,17 @@ tpc_lib_api::GlueCodeReturn SparseMatrixMulFwdF32::GetGcDefinitions(
     *    the dimensions of the output tensor, up to dim 0.
     **************************************************************************************/
     int32_t c_vlen             = 64;
-    int32_t c_height_step_size = 6;   
-
 
     // If we split same tensor size as GEMM multiplications we can use the same index space geometry
     // MODIFICATION HERE SPLIT WITH INDEX
-    out_defs->indexSpaceRank = 3;
+    out_defs->indexSpaceRank = 4;
 
-    // [0] Split Row , [1] Split Col, [2] Split COO Formats
+    // [Ccol == Bcol, Crow, Brow, Acol]
     out_defs->indexSpaceGeometry[0] =
         (in_defs->outputTensors[0].geometry.maxSizes[0] + c_vlen - 1) / c_vlen;
-    out_defs->indexSpaceGeometry[1] =
-        (in_defs->outputTensors[0].geometry.maxSizes[1] + c_height_step_size - 1) / c_height_step_size;
-    out_defs->indexSpaceGeometry[2] =
-        std::max(in_defs->inputTensors[0].geometry.maxSizes[2], (uint64_t)1);
+    out_defs->indexSpaceGeometry[1] = (in_defs->outputTensors[0].geometry.maxSizes[1]);
+    out_defs->indexSpaceGeometry[2] = (in_defs->inputTensors[3].geometry.maxSizes[1]);
+    out_defs->indexSpaceGeometry[3] = (in_defs->inputTensors[0].geometry.maxSizes[0])
 
     // Matrix C - Tensor Access Pattern
     out_defs->outputTensorAccessPattern[0].mapping[0].indexSpaceDim     = 0;
@@ -115,32 +113,26 @@ tpc_lib_api::GlueCodeReturn SparseMatrixMulFwdF32::GetGcDefinitions(
     out_defs->outputTensorAccessPattern[0].mapping[0].end_b   = c_vlen - 1;
 
     out_defs->outputTensorAccessPattern[0].mapping[1].indexSpaceDim     = 1;
-    out_defs->outputTensorAccessPattern[0].mapping[1].a = c_height_step_size;
+    out_defs->outputTensorAccessPattern[0].mapping[1].a = 1;
     out_defs->outputTensorAccessPattern[0].mapping[1].start_b = 0;
-    out_defs->outputTensorAccessPattern[0].mapping[1].end_b   = c_height_step_size - 1;
-    
-    // NOT USE 3D TENSOR
-    // // Actually no operation for 3rd dimension batch size 1
-    // out_defs->outputTensorAccessPattern[0].mapping[2].indexSpaceDim     = 2;
-    // out_defs->outputTensorAccessPattern[0].mapping[2].a = 1;
-    // out_defs->outputTensorAccessPattern[0].mapping[2].start_b = 0;
-    // out_defs->outputTensorAccessPattern[0].mapping[2].end_b   = 1 - 1;
+    out_defs->outputTensorAccessPattern[0].mapping[1].end_b   = 1 - 1;
 
-    // ROW INDICES - [0] --> SPlit in to Col    [8X1] 
+    // Sparse splits [8X1] 
 
     for (int i=0; i<3;i++){
-        out_defs->inputTensorAccessPattern[i].mapping[0].indexSpaceDim     = 0;
+        out_defs->inputTensorAccessPattern[i].mapping[0].indexSpaceDim  = 3;
         out_defs->inputTensorAccessPattern[i].mapping[0].a = 1;
         out_defs->inputTensorAccessPattern[i].mapping[0].start_b = 0;
         out_defs->inputTensorAccessPattern[i].mapping[0].end_b = 0;
 
+        // We use only one column
+        // If we fused row col value vectors we can mapping indexSpace DIm
         out_defs->inputTensorAccessPattern[i].mapping[1].indexSpaceDim     = 1;
-        out_defs->inputTensorAccessPattern[i].mapping[1].a = 1;
+        out_defs->inputTensorAccessPattern[i].mapping[1].a = 0;
         out_defs->inputTensorAccessPattern[i].mapping[1].start_b = 0;
         out_defs->inputTensorAccessPattern[i].mapping[1].end_b   = 0;
     }
 
-   
 
     // Matrix B - Tensor Access Pattern - 4th inputTensors
     out_defs->inputTensorAccessPattern[3].mapping[0].indexSpaceDim     = 0;
@@ -148,18 +140,12 @@ tpc_lib_api::GlueCodeReturn SparseMatrixMulFwdF32::GetGcDefinitions(
     out_defs->inputTensorAccessPattern[3].mapping[0].start_b = 0;
     out_defs->inputTensorAccessPattern[3].mapping[0].end_b   = c_vlen - 1;
 
-    out_defs->inputTensorAccessPattern[3].mapping[1].indexSpaceDim     = 1;
-    out_defs->inputTensorAccessPattern[3].mapping[1].a = 0;
+    out_defs->inputTensorAccessPattern[3].mapping[1].indexSpaceDim     = 2;
+    out_defs->inputTensorAccessPattern[3].mapping[1].a = 1;
     out_defs->inputTensorAccessPattern[3].mapping[1].start_b = 0;
-    out_defs->inputTensorAccessPattern[3].mapping[1].end_b =
-        in_defs->inputTensors[3].geometry.maxSizes[1] - 1;
+    out_defs->inputTensorAccessPattern[3].mapping[1].end_b = 1 - 1;
 
-    // Actually no operation for 3rd dimension batch size 1
-    out_defs->inputTensorAccessPattern[3].mapping[2].indexSpaceDim     = 2;
-    out_defs->inputTensorAccessPattern[3].mapping[2].a = 1;
-    out_defs->inputTensorAccessPattern[3].mapping[2].start_b = 0;
-    out_defs->inputTensorAccessPattern[3].mapping[2].end_b   = 1 - 1;
-
+    // HELP HERE - How to split the tensor access pattern for the sparse matrix
 
     /*************************************************************************************
     *    Stage V -  Load ISA into the descriptor.

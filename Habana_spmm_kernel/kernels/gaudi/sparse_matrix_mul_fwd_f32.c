@@ -78,8 +78,5 @@ void main(tensor row_indices,  // Row indices of sparse matrix A (CSR or COO for
             }
         }
     }
-
-
-
-    }
 }
+

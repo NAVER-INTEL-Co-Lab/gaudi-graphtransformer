@@ -38,8 +38,8 @@ void SparseMatrixMulFwdF32Test::matrix_mul_reference_implementation(
 }
 
 void SparseMatrixMulFwdF32Test::spmm_reference_implementation(
-        const float_2DTensor& row_indices,
-        const float_2DTensor& col_indices,
+        const int_2DTensor& row_indices,
+        const int_2DTensor& col_indices,
         const float_2DTensor& values,
         const float_3DTensor& bMatrix,
         float_3DTensor& output)
@@ -107,7 +107,6 @@ int SparseMatrixMulFwdF32Test::runTest(){
     float_3DTensor c_matrix(fmInitializer_c);
     float_3DTensor c_matrix_ref(fmInitializer_c);
 
-
     // Make a matrix sparse 
     int sparse_coord[] = {0,0,0};
     a_matrix.SetElement(sparse_coord,0);
@@ -125,8 +124,8 @@ int SparseMatrixMulFwdF32Test::runTest(){
 
     // Sparse representation of `a_matrix`
     uint64_t sparseInitializer[] = {8, 1};
-    float_2DTensor row_indices(sparseInitializer);
-    float_2DTensor col_indices(sparseInitializer);
+    int_2DTensor row_indices(sparseInitializer);
+    int_2DTensor col_indices(sparseInitializer);
     float_2DTensor values(sparseInitializer);
 
     // Convert dense matrix A into COO format
@@ -253,8 +252,8 @@ void testCompareDenseAndSparse(){
 
     // Sparse representation of `a_matrix`
     uint64_t sparseInitializer[] = {8, 1};
-    float_2DTensor row_indices(sparseInitializer);
-    float_2DTensor col_indices(sparseInitializer);
+    int_2DTensor row_indices(sparseInitializer);
+    int_2DTensor col_indices(sparseInitializer);
     float_2DTensor values(sparseInitializer);
 
     // Convert dense matrix A into COO format
@@ -289,7 +288,7 @@ void testCompareDenseAndSparse(){
     //     int32_t coord[] = {i, 0};
     //     printf("values[%d][%d]: %f\n", i, 0, values.ElementAt(coord));
     // }
-
+    
     // Execute reference dense matrix multiplication
     SparseMatrixMulFwdF32Test testObj;
     testObj.matrix_mul_reference_implementation(a_matrix, b_matrix, c_matrix_dense);
@@ -334,7 +333,7 @@ void testCompareDenseAndSparse(){
 }
 
 
-int main() {
-    testCompareDenseAndSparse();
-    return 0;
-}
+// int main() {
+//     testCompareDenseAndSparse();
+//     return 0;
+// }
