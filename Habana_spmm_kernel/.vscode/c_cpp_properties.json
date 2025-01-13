@@ -1,0 +1,27 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/usr/lib/habanatools/include/**",
+                "${workspaceFolder}/doc/**"
+            ],
+            "defines": [
+                "TPC_COMPILER"
+            ],
+            "compilerPath": null,
+            "cStandard": "c23",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-clang-x86",
+            "configurationProvider": "ms-vscode.cpptools",
+            "browse": {
+                "path": [
+                    "/usr/lib/habanatools/include/",
+                    "${workspaceFolder}/"
+                ]
+            }
+        }
+    ],
+    "version": 4
+}
