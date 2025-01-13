@@ -56,12 +56,12 @@ void SparseMatrixMulFwdF32Test::spmm_reference_implementation(
     for(int32_t nz_idx = 0 ; nz_idx < num_nnz; nz_idx++){
         int32_t row_coord[] = {nz_idx, 0};
         int32_t row = row_indices.ElementAt(row_coord);
-        int32_t col = col_indices.ElementAt(row_coord);
-        float_t val = values.ElementAt(row_coord);
+        // int32_t col = col_indices.ElementAt(row_coord);
+        // float_t val = values.ElementAt(row_coord);
 
-        printf("row: %d\n", row);
-        printf("col: %d\n", col);
-        printf("val: %f\n", val);
+        // printf("row: %d\n", row);
+        // printf("col: %d\n", col);
+        // printf("val: %f\n", val);
 
         int32_t col_coord[] = {nz_idx,0};
         int common = static_cast<int>(col_indices.ElementAt(col_coord));
@@ -71,7 +71,7 @@ void SparseMatrixMulFwdF32Test::spmm_reference_implementation(
         for(int32_t dense_col = 0; dense_col < (int32_t)bMatrix.Size(0); dense_col++){
             int32_t b_coord[] = {dense_col, common};
             float b_val = bMatrix.ElementAt(b_coord);
-            printf("B_matrix col: %f\n", b_val);
+            // printf("B_matrix col: %f\n", b_val);
             int32_t c_coord[] = {dense_col, row};
             float accum = output.ElementAt(c_coord);
             accum = std::fmaf(value, b_val, accum);
@@ -94,9 +94,10 @@ int SparseMatrixMulFwdF32Test::runTest(){
     a_matrix.InitRand(1.0f, 10.0f);
 
     float_2DTensor b_matrix(fmInitializer_b);
-    b_matrix.InitRand(1.0f, 10.0f);
+    b_matrix.InitRand(10.0f, 30.0f);
 
     float_2DTensor c_matrix(fmInitializer_c);
+    float_2DTensor c_matrix_dense(fmInitializer_c);
     float_2DTensor c_matrix_ref(fmInitializer_c);
 
     uint64_t nnz = 0;
@@ -121,7 +122,7 @@ int SparseMatrixMulFwdF32Test::runTest(){
     for(int i=0;i<row;i++){
         for(int j=0;j<common;j++){
             int32_t coord[] = {j, i};
-            if(a_matrix.ElementAt(coord) != 0){
+            if(a_matrix.ElementAt(coord) > 1e-6){
                 row_indices.SetElement(cur_indices_coords, i);
                 col_indices.SetElement(cur_indices_coords, j);
                 values.SetElement(cur_indices_coords, a_matrix.ElementAt(coord));
@@ -131,7 +132,22 @@ int SparseMatrixMulFwdF32Test::runTest(){
     }
 
     // Execute sparse matrix multiplication
+    matrix_mul_reference_implementation(a_matrix, b_matrix, c_matrix_dense);
     spmm_reference_implementation(row_indices, col_indices, values, b_matrix, c_matrix_ref);
+    // std::cout << "Dense Matrix" << std::endl;
+    // c_matrix_dense.Print(0);
+    // std::cout << "Dense Matrix" << std::endl;
+
+    // c_matrix_ref.Print(0);
+    // for (int element = 0 ; element <  c_matrix_ref.ElementCount() ; element++)
+    // {
+    //     if (abs(c_matrix_dense.Data()[element] - c_matrix_ref.Data()[element]) > 1e-6)
+    //     {
+    //         std::cout << "Wrong Elemet at: " << element << " Expected: " << c_matrix_ref.Data()[element] << " Got: " << c_matrix_dense.Data()[element] << std::endl;
+    //         std::cout << "Sparse Matrix multiply FWD F32 test failed!!" << std::endl;
+    //         return -1;
+    //     }
+    // }
 
     // generate input for query call
     m_in_defs.deviceId = tpc_lib_api::DEVICE_ID_GAUDI2;
@@ -182,9 +198,10 @@ int SparseMatrixMulFwdF32Test::runTest(){
     c_matrix.Print(0);
 
     c_matrix_ref.Print(0);
+    std::setprecision(6);
     for (int element = 0 ; element <  c_matrix_ref.ElementCount() ; element++)
     {
-        if (abs(c_matrix.Data()[element] - c_matrix_ref.Data()[element]) > 5*1e-5)
+        if (abs(c_matrix.Data()[element] - c_matrix_ref.Data()[element]) > 1e-6)
         {
             std::cout << "Wrong Elemet at: " << element << " Expected: " << c_matrix_ref.Data()[element] << " Got: " << c_matrix.Data()[element] << std::endl;
             std::cout << "Sparse Matrix multiply FWD F32 test failed!!" << std::endl;
